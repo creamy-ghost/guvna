@@ -25,12 +25,12 @@ Build order with definition of done per phase. No time estimates — this is a p
 - Streaming usage capture from the final SSE chunk (non-streaming already counted)
 - **Done:** provider fails mid-session → chain skips it until cool-off expires; stream rows carry real token counts — verified live (groq 37/10)
 
-## Phase 3 — The VPS deploy (DONE 2026-08-16)
+## Phase 3 — VPS deploy (DONE 2026-08-16)
 
 - Distroless image: multi-stage, CGO_ENABLED=0, `gcr.io/distroless/static-debian12:nonroot`, ~13MB, no shell
 - `-healthcheck` flag (binary probes own /healthz — no shell in image), `-data` flag for the volume
 - Docker compose: `network_mode: host` (the VPS can't create bridge networks), `mem_limit: 400m`, `GOMEMLIMIT=256MiB`, named volume `/data`, restart unless-stopped
-- Caddy vhost `gateway.example.com:9443` → 127.0.0.1:20128 (port 443 collides with another TLS service)
+- Caddy vhost `gateway.example.com:9443` → 127.0.0.1:20128 (port 443 was already occupied by another TLS service)
 - Keys via `/home/alex/guvna/.env` (chmod 600), never in git
 - **Done:** streaming chat + admin status through the caddy subdomain from the laptop, container health checks green
 
@@ -40,7 +40,7 @@ Build order with definition of done per phase. No time estimates — this is a p
 - `guvna-cli` binary: `status` (table or `--json`) + `logs [-n]`, local (`http://127.0.0.1:20128`) or remote (`--url https://gateway...:9443`, `--token`/`GUVNA_ADMIN_KEY`)
 - Scoped tokens: the admin key over the gateway's HTTPS endpoint — no new port exposed
 - **Not yet:** `connect` subcommand with revocable scoped tokens, `config`, `providers`
-- **Done when:** `guvna-cli status` from laptop shows real usage/health of the the VPS instance — verified live
+- **Done when:** `guvna-cli status` from laptop shows real usage/health of the VPS instance — verified live
 
 ## Phase 4b — Custom chains API (DONE 2026-08-16)
 

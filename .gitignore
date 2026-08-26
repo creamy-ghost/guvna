@@ -1,11 +1,12 @@
 # Secrets — never commit
 .env*
 !.env.example
-!deploy/.env.the VPS.example
+!deploy/.env.example
 *.db
 
 # Private infra runbooks — never commit
 docs/runbook-*.md
+docs/DECISIONS.md
 
 # J-space working ledger
 .jspace/

@@ -30,7 +30,7 @@ type Adaptor interface {
 var defaultDialer = &net.Dialer{Timeout: 30 * time.Second, KeepAlive: 30 * time.Second}
 
 // preferV4DialContext dials IPv4 when A records exist. Some networks serve
-// dead AAAA records (e.g. the the VPS VPS behind a DNS virtual gateway: AAAA
+// dead AAAA records (e.g. a VPS behind a DNS virtual gateway: AAAA
 // TCP connects but TLS never completes), which Go's Happy Eyeballs prefers and
 // turns into EOF/timeouts. Falling back to the default dialer when the host is
 // an IP literal or has no A records keeps v6-only hosts working.

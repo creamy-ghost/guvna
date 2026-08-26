@@ -72,7 +72,7 @@ func Open(path string, interval time.Duration) (*Telemetry, error) {
 }
 
 // migrate adds columns introduced after the initial schema to existing
-// databases (e.g. the the VPS volume) without dropping data.
+// databases (e.g. an existing production volume) without dropping data.
 func migrate(db *sql.DB) error {
 	rows, err := db.Query(`PRAGMA table_info(requests)`)
 	if err != nil {

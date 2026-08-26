@@ -79,7 +79,6 @@ Use-ready and running in production (single user) since 2026-08-16. Compression 
 | [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) | Deploy anywhere: Compose, binary/systemd, TLS, keys, chains |
 | [docs/RESEARCH.md](docs/RESEARCH.md) | Why: comparisons (new-api, litellm, OmniRoute), compression reality check |
 | [docs/ROADMAP.md](docs/ROADMAP.md) | Build order, phase-by-phase definition of done |
-| [docs/DECISIONS.md](docs/DECISIONS.md) | Decision log with dates and rationale |
 
 ## Contributing
 

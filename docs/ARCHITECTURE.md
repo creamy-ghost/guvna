@@ -10,7 +10,7 @@ app / any OpenAI-compatible client
 │  Guvna daemon (single static binary) │
 │  ┌────────────┐ ┌───────────────┐        │
 │  │  Router    │ │  Compression  │        │
-│  │  adaptors  │ │  pipeline     │        │
+│  │  adaptors  │ │  pipeline*    │        │
 │  └────────────┘ └───────────────┘        │
 │  ┌────────────┐ ┌───────────────┐        │
 │  │  Chains    │ │  Telemetry    │        │
@@ -22,8 +22,10 @@ app / any OpenAI-compatible client
         │ 50+ providers  │
         └────────────────┘
 
-Separate, optional:  read-only web UI binary  (never in core)
-CLI:                guvna status / logs / chains (local + remote over gateway)
+Separate, optional:  read-only web UI binary* (never in core)
+CLI:                guvna-cli status / logs / chains (local + remote over gateway)
+
+* planned — see ROADMAP phases 6–7; everything unmarked is shipped.
 ```
 
 ## Components
@@ -41,22 +43,19 @@ CLI:                guvna status / logs / chains (local + remote over gateway)
 - Telemetry: in-memory event buffer, async batch flush to SQLite every 30s (pure-Go driver, no CGO); hot path never touches disk; crash loses <30s
 - Single process, one port. No dashboard in the process.
 
-### 2. Compression pipeline
-Decision precedence (adapted from OmniRoute): per-request header (`x-guvna-compression`) → named profile → adaptive → config default → off. Cache-aware compression is always on (never touch already-cached prefixes).
+### 2. Compression pipeline (planned — ROADMAP Phase 6, not built)
+Decision precedence when built (adapted from OmniRoute): per-request header (`x-guvna-compression`) → named profile → adaptive → config default → off. Cache-aware compression is always on (never touch already-cached prefixes).
 
 v1 engines:
 1. **Caveman-style** — JSON rule packs + language packs + injected system prompt. Rule pack format and packs are MIT-licensed from JuliusBrussee/caveman and OmniRoute's `open-sse` compression config.
-2. **RTK-style tool-output filters** — reimplement filters for ~10 dominant commands (git, grep, ls, build logs) in Go. Reference: rtk-ai/rtk (Rust CLI, no library API — reimplement, don't bind). The user runs rtk v0.43.0 locally at `~/.local/bin/rtk` for reference behavior.
+2. **RTK-style tool-output filters** — reimplement filters for ~10 dominant commands (git, grep, ls, build logs) in Go. Reference: rtk-ai/rtk (Rust CLI, no library API — reimplement, don't bind).
 3. **Session dedup** — content-addressed pruning of repeated/redundant conversation turns.
 
 v2 (not in v1): LLMLingua-2 (ONNX MobileBERT, heavy — separate process or sidecar), headroom-style live-zone (only compress the uncached tail).
 
-### 3. Catalog sync (subscribe-sync)
-- Script pulls OmniRoute's MIT catalog data on a schedule:
-  - `open-sse/config/freeModelCatalog.ts` (per-model free catalog, ~530 models)
-  - `src/shared/constants/providers.ts` (per-provider `hasFree` + `freeNote`)
-- Diff + commit to git. We own the sync layer, not the weekly re-audit.
-- Data is declarative and MIT — legally liftable. Data persists in git history even if upstream dies.
+### 3. Catalog sync (cancelled)
+
+~~Subscribe-sync script pulling OmniRoute's MIT catalog data.~~ **Cancelled 2026-08-16** — catalogs go stale and a stale catalog rejects valid new models. The upstream provider IS the catalog: chain creation validates loosely (provider exists, model non-empty) and unknown models fail at request time, where the chain falls over. Full rationale in DECISIONS.md.
 
 ### 4. Config & data
 - **Config-as-code**: YAML in git (`config.yaml`): providers, keys via env, profiles, compression settings, ports, routing weights
@@ -64,11 +63,11 @@ v2 (not in v1): LLMLingua-2 (ONNX MobileBERT, heavy — separate process or side
 - Data dir: `~/.guvna/` (config override, db, logs)
 
 ### 5. Security
-- Auth always on: one admin key (env `ADMIN_KEY` / `JWT_SECRET`), API keys for clients
-- Scoped tokens for remote CLI (`guvna connect`), revocable
+- Auth always on: one admin key (env `ADMIN_KEY`), client keys (env `API_KEYS`); the gateway refuses to start without them
+- Remote CLI authenticates with the admin key over the gateway's HTTPS endpoint — no new port, no separate token scheme (revocable scoped tokens: future work, ROADMAP Phase 4)
 - No multi-user, no registration, no open dashboard
 
-### 6. Web UI (v1, minimal, separate)
+### 6. Web UI (planned — ROADMAP Phase 7, not built)
 - Read-only status: provider health, usage, token savings
 - Separate binary; can be omitted from deployment entirely
 

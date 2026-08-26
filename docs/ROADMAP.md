@@ -31,7 +31,7 @@ Build order with definition of done per phase. No time estimates — this is a p
 - `-healthcheck` flag (binary probes own /healthz — no shell in image), `-data` flag for the volume
 - Docker compose: `network_mode: host` (the VPS can't create bridge networks), `mem_limit: 400m`, `GOMEMLIMIT=256MiB`, named volume `/data`, restart unless-stopped
 - Caddy vhost `gateway.example.com:9443` → 127.0.0.1:20128 (port 443 was already occupied by another TLS service)
-- Keys via `/home/alex/guvna/.env` (chmod 600), never in git
+- Keys via `~/guvna/.env` (chmod 600), never in git
 - **Done:** streaming chat + admin status through the caddy subdomain from the laptop, container health checks green
 
 ## Phase 4 — Remote CLI (DONE 2026-08-16, partial)
@@ -64,7 +64,7 @@ Build order with definition of done per phase. No time estimates — this is a p
 ## Phase 5 — Catalog sync (parked — superseded by loose validation)
 
 - ~~Subscribe-sync script: pull OmniRoute MIT catalog files, normalize, diff + commit to git~~ — **cancelled 2026-08-16**: catalogs go stale (orcarouter ships new free models weekly); a stale catalog rejects valid new models — worse than a typo failing at request time. The upstream provider IS the catalog for a single-user gateway. Revisit only if chain creation needs model discovery/completion.
-- `guvna providers list` / `providers test` CLI
+- `guvna-cli providers list` / `providers test` CLI
 - Free-tier health flags (per-provider hasFree + freeNote from catalog)
 - **Done when:** a fresh sync produces a clean git commit and provider list is queryable
 

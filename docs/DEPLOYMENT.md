@@ -12,7 +12,7 @@ docker compose -f deploy/docker-compose.yml up -d
 
 The compose file builds the distroless image locally (~13MB, no shell, runs as nonroot) and mounts a named volume at `/data` for SQLite telemetry + `chains.yaml`.
 
-Prefer the published image once available:
+Or use the published multi-arch image (amd64/arm64):
 
 ```sh
 docker run -d --name guvna \

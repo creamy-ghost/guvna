@@ -7,7 +7,9 @@ Low-resource AI gateway in Go. One OpenAI-compatible endpoint that routes to fre
 
 ## Why
 
-Most LLM gateways are multi-tenant platforms: databases, dashboards, hundreds of MB of RAM. Guvna is the opposite bet — **config-as-code, no database, one static binary** (~16MB, distroless image ~13MB):
+Most LLM API gateways sit at two extremes. Either they're TypeScript bloat — a Node service eating hundreds of MB of RAM to do what is fundamentally forwarding HTTP — or they're enterprise-grade platforms built for teams: multi-tenant, database-backed, dashboard-first, ops-budget-required.
+
+Guvna takes neither horn: **config-as-code, no database, one static binary** (~16MB, distroless image ~13MB) that runs in ~15–40MB of RAM and is sized for exactly one user.
 
 - **Chain-based routing** — define ordered provider/model fallback steps per use case (`mychain` → bazaarlink qwen → groq llama → mistral codestral). Clients call chain names; real provider model names never leak into your apps.
 - **Key pools** — per-provider rotation (round-robin / least-used / sequential) with class-based quarantine (auth / rate-limit / transient) and automatic failover. One dead key never burns the pool.
@@ -64,7 +66,7 @@ guvna-cli status
 
 ## Configuration
 
-Everything is YAML in git (`config.yaml`): providers, models, rotation strategy, chains. Keys live only in env (`.env.providers`, gitignored). Per-step request params can be set inside chain steps (`params`, client values always win). See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the full data model and [docs/FREE_MODELS.md](docs/FREE_MODELS.md) for per-provider free-tier limits.
+Everything is YAML in git (`config.yaml`): providers, models, rotation strategy, chains. Keys live only in env (`.env`, gitignored — see `.env.example`). Per-step request params can be set inside chain steps (`params`, client values always win). See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the full data model and [docs/FREE_MODELS.md](docs/FREE_MODELS.md) for per-provider free-tier limits.
 
 ## Status
 
@@ -78,6 +80,8 @@ Use-ready and running in production (single user) since 2026-08-16. Compression 
 | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | Design: components, data model, security, chains, key pools |
 | [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) | Deploy anywhere: Compose, binary/systemd, TLS, keys, chains |
 | [docs/RESEARCH.md](docs/RESEARCH.md) | Why: comparisons (new-api, litellm, OmniRoute), compression reality check |
+| [docs/DECISIONS.md](docs/DECISIONS.md) | Decision log with dates and rationale |
+| [docs/FREE_MODELS.md](docs/FREE_MODELS.md) | Per-provider free model + rate-limit reference |
 | [docs/ROADMAP.md](docs/ROADMAP.md) | Build order, phase-by-phase definition of done |
 
 ## Contributing

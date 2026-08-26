@@ -1,13 +1,13 @@
-# BruvRoute. Secrets come from .env (see .env.example).
+# Guvna. Secrets come from .env (see .env.example).
 # host network: use this when your Docker cannot create bridge networks (no iptables),
 # and a host-network reverse proxy reaches the app on 127.0.0.1:20128.
 services:
-  bruvroute:
+  guvna:
     build:
       context: ..
       dockerfile: deploy/Dockerfile
-    image: bruvroute:latest
-    container_name: bruvroute
+    image: guvna:latest
+    container_name: guvna
     restart: unless-stopped
     mem_limit: 400m
     network_mode: host
@@ -15,13 +15,13 @@ services:
       - GOMEMLIMIT=256MiB
     env_file: .env
     volumes:
-      - bruvroute-data:/data
+      - guvna-data:/data
     healthcheck:
-      test: ["CMD", "/bruvroute", "-healthcheck", "-config", "/config.yaml"]
+      test: ["CMD", "/guvna", "-healthcheck", "-config", "/config.yaml"]
       interval: 30s
       timeout: 3s
       start_period: 5s
       retries: 3
 
 volumes:
-  bruvroute-data:
+  guvna-data:

@@ -32,7 +32,7 @@ Independent replay (codepointer.substack.com, 2026-07-14) of rtk/headroom/cavema
 
 Why claims are inflated: they measure only the compressible payload. Real bills are ~42% cache-writes + ~29% output tokens; streams compression doesn't touch output; cache reads (what compression removes) are the cheapest token.
 
-**The inversion for BruvRoute:** we target free tiers whose quotas are token-count-based. Compression = quota stretching (2-3x more work per free token), not bill savings. The numbers above do not invalidate the product — they invalidate the "bill savings" framing. BruvRoute's framing is quota stretching.
+**The inversion for Guvna:** we target free tiers whose quotas are token-count-based. Compression = quota stretching (2-3x more work per free token), not bill savings. The numbers above do not invalidate the product — they invalidate the "bill savings" framing. Guvna's framing is quota stretching.
 
 ## OmniRoute facts used as reference (all MIT)
 

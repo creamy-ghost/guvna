@@ -1,13 +1,13 @@
-// bruvroute-cli — local and remote status, logs, and chain management for a
-// BruvRoute gateway. Local: talks to http://127.0.0.1:20128 (or BRUVROUTE_URL).
+// guvna-cli — local and remote status, logs, and chain management for a
+// Guvna gateway. Local: talks to http://127.0.0.1:20128 (or GUVNA_URL).
 // Remote: point --url at the gateway's HTTPS endpoint (caddy) — the admin
 // key travels as a Bearer token; no new port is exposed.
 //
-//	bruvroute-cli status [--url URL] [--token KEY]
-//	bruvroute-cli logs [-n 100] [--url URL] [--token KEY]
-//	bruvroute-cli chains [list]
-//	bruvroute-cli chains add NAME --step provider:model [--step ...]
-//	bruvroute-cli chains rm NAME
+//	guvna-cli status [--url URL] [--token KEY]
+//	guvna-cli logs [-n 100] [--url URL] [--token KEY]
+//	guvna-cli chains [list]
+//	guvna-cli chains add NAME --step provider:model [--step ...]
+//	guvna-cli chains rm NAME
 package main
 
 import (
@@ -45,24 +45,24 @@ func main() {
 		os.Exit(1)
 	}
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "bruvroute-cli: %v\n", err)
+		fmt.Fprintf(os.Stderr, "guvna-cli: %v\n", err)
 		os.Exit(1)
 	}
 }
 
 func usage() {
-	fmt.Fprintf(os.Stderr, `bruvroute-cli — gateway status, logs, chain management
+	fmt.Fprintf(os.Stderr, `guvna-cli — gateway status, logs, chain management
 
 usage:
-  bruvroute-cli status [flags]
-  bruvroute-cli logs [-n lines] [flags]
-  bruvroute-cli chains [list]
-  bruvroute-cli chains add NAME --step provider:model [--step ...]
-  bruvroute-cli chains rm NAME
+  guvna-cli status [flags]
+  guvna-cli logs [-n lines] [flags]
+  guvna-cli chains [list]
+  guvna-cli chains add NAME --step provider:model [--step ...]
+  guvna-cli chains rm NAME
 
 flags:
-  --url    gateway base URL (default: %s or $BRUVROUTE_URL)
-  --token  admin key (default: $BRUVROUTE_ADMIN_KEY)
+  --url    gateway base URL (default: %s or $GUVNA_URL)
+  --token  admin key (default: $GUVNA_ADMIN_KEY)
   --json   emit raw JSON instead of a table
 `, defaultURL)
 }
@@ -74,8 +74,8 @@ type commonFlags struct {
 }
 
 func parseCommon(fs *flag.FlagSet, cf *commonFlags) {
-	fs.StringVar(&cf.url, "url", envOr("BRUVROUTE_URL", defaultURL), "gateway base URL")
-	fs.StringVar(&cf.token, "token", os.Getenv("BRUVROUTE_ADMIN_KEY"), "admin key (Bearer token)")
+	fs.StringVar(&cf.url, "url", envOr("GUVNA_URL", defaultURL), "gateway base URL")
+	fs.StringVar(&cf.token, "token", os.Getenv("GUVNA_ADMIN_KEY"), "admin key (Bearer token)")
 	fs.BoolVar(&cf.json, "json", false, "raw JSON output")
 }
 
@@ -94,7 +94,7 @@ func (cf commonFlags) get(path string, out any) error {
 // decodes a JSON response body into out (when out is non-nil).
 func (cf commonFlags) do(method, path string, body any, out any) error {
 	if cf.token == "" {
-		return fmt.Errorf("no admin key: pass --token or set BRUVROUTE_ADMIN_KEY")
+		return fmt.Errorf("no admin key: pass --token or set GUVNA_ADMIN_KEY")
 	}
 	var rd io.Reader
 	if body != nil {
@@ -173,7 +173,7 @@ func statusCmd(args []string) error {
 		return printJSON(st)
 	}
 
-	fmt.Printf("BruvRoute %s  (uptime %s)\n", cf.url, st.Uptime)
+	fmt.Printf("Guvna %s  (uptime %s)\n", cf.url, st.Uptime)
 	fmt.Printf("chains: %s\n\n", strings.Join(st.Chains, "  "))
 
 	fmt.Printf("%-12s %-28s %8s  %s\n", "PROVIDER", "MODEL", "FAILURES", "STATE")

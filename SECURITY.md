@@ -2,11 +2,11 @@
 
 ## Reporting
 
-Report vulnerabilities privately via [GitHub Security Advisories](https://github.com/creamy-ghost/bruvroute/security/advisories/new). Please do not open public issues for security problems. You can expect an initial response within 7 days.
+Report vulnerabilities privately via [GitHub Security Advisories](https://github.com/creamy-ghost/guvna/security/advisories/new). Please do not open public issues for security problems. You can expect an initial response within 7 days.
 
 ## Scope
 
-BruvRoute is a **single-user** gateway holding valuable secrets: admin key, client API keys, and upstream provider keys.
+Guvna is a **single-user** gateway holding valuable secrets: admin key, client API keys, and upstream provider keys.
 
 In scope:
 
@@ -18,7 +18,7 @@ In scope:
 
 Out of scope (by design):
 
-- Multi-tenant isolation — BruvRoute serves one operator; all client keys are trusted to that operator
+- Multi-tenant isolation — Guvna serves one operator; all client keys are trusted to that operator
 - DoS resilience beyond basic timeouts — it is meant to run behind a reverse proxy
 - The host environment (reverse proxy TLS, firewall) — see docs/DEPLOYMENT.md hardening notes
 

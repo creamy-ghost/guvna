@@ -15,7 +15,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/creamy-ghost/bruvroute/internal/config"
+	"github.com/creamy-ghost/guvna/internal/config"
 )
 
 const chatPath = "/v1/chat/completions"
@@ -96,6 +96,6 @@ func (a *openAICompat) Chat(ctx context.Context, body []byte) (*http.Response, e
 	}
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Authorization", "Bearer "+a.key)
-	req.Header.Set("User-Agent", "bruvroute/0.1")
+	req.Header.Set("User-Agent", "guvna/0.1")
 	return Client.Do(req)
 }

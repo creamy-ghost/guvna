@@ -4,7 +4,7 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/creamy-ghost/bruvroute/internal/config"
+	"github.com/creamy-ghost/guvna/internal/config"
 )
 
 func testConfig() *config.Config {

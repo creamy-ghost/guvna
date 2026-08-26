@@ -1,4 +1,4 @@
-# BruvRoute config — config-as-code, in git. Keys live in env only (.env.providers),
+# Guvna config — config-as-code, in git. Keys live in env only (.env.providers),
 # referenced here by name. See docs/ARCHITECTURE.md.
 port: 20128
 

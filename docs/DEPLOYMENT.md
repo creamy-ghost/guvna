@@ -1,11 +1,11 @@
 # Deployment
 
-BruvRoute is a single static binary with config-as-code. Two supported ways to run it.
+Guvna is a single static binary with config-as-code. Two supported ways to run it.
 
 ## Option A — Docker Compose
 
 ```sh
-git clone https://github.com/creamy-ghost/bruvroute && cd bruvroute
+git clone https://github.com/creamy-ghost/guvna && cd guvna
 cp .env.example .env              # add ADMIN_KEY + API_KEYS + provider keys
 docker compose -f deploy/docker-compose.yml up -d
 ```
@@ -15,21 +15,21 @@ The compose file builds the distroless image locally (~13MB, no shell, runs as n
 Prefer the published image once available:
 
 ```sh
-docker run -d --name bruvroute \
+docker run -d --name guvna \
   -p 20128:20128 \
   --env-file .env \
   -e GOMEMLIMIT=256MiB \
-  -v bruvroute-data:/data \
+  -v guvna-data:/data \
   -v "$PWD/config.yaml:/config.yaml:ro" \
-  ghcr.io/creamy-ghost/bruvroute:latest
+  ghcr.io/creamy-ghost/guvna:latest
 ```
 
 ## Option B — Plain binary / systemd user unit
 
 ```sh
-go install github.com/creamy-ghost/bruvroute/cmd/bruvroute@latest
+go install github.com/creamy-ghost/guvna/cmd/guvna@latest
 cp .env.example .env && set -a && source .env && set +a   # or use systemd EnvironmentFile=
-bruvroute -config config.yaml                             # data dir defaults to ~/.bruvroute
+guvna -config config.yaml                             # data dir defaults to ~/.guvna
 ```
 
 A minimal unit runs it as your user on port 20128, keys via env, never in git.
@@ -72,9 +72,9 @@ curl -X POST http://127.0.0.1:20128/v1/chains \
 curl -X DELETE http://127.0.0.1:20128/v1/chains/myfree -H "Authorization: Bearer $CLIENT_KEY"
 
 # CLI (same surface, works remotely over HTTPS)
-bruvroute-cli chains list
-bruvroute-cli chains add myfree --step bazaarlink:qwen/qwen3.7-flash:free --step groq:llama-3.3-70b-versatile
-bruvroute-cli chains rm myfree
+guvna-cli chains list
+guvna-cli chains add myfree --step bazaarlink:qwen/qwen3.7-flash:free --step groq:llama-3.3-70b-versatile
+guvna-cli chains rm myfree
 ```
 
 Chat with a chain name as the model, or bypass chains entirely with a provider-prefixed model (`groq/llama-3.3-70b-versatile`). Unknown model → 404 with a pointer to the creation API.
@@ -82,9 +82,9 @@ Chat with a chain name as the model, or bypass chains entirely with a provider-p
 ## Observability
 
 ```sh
-export BRUVROUTE_URL=http://127.0.0.1:20128 BRUVROUTE_ADMIN_KEY=...
-bruvroute-cli status          # chains, step health, usage table (--json for raw)
-bruvroute-cli logs -n 100     # tail the in-memory ring
+export GUVNA_URL=http://127.0.0.1:20128 GUVNA_ADMIN_KEY=...
+guvna-cli status          # chains, step health, usage table (--json for raw)
+guvna-cli logs -n 100     # tail the in-memory ring
 curl -s -H "Authorization: Bearer $ADMIN_KEY" http://127.0.0.1:20128/admin/status | jq
 ```
 

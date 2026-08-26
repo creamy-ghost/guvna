@@ -1,6 +1,6 @@
 # Contributing
 
-Thanks for looking at BruvRoute. It is a deliberately small, opinionated project — read [docs/VISION.md](docs/VISION.md) before proposing features; non-goals there are real.
+Thanks for looking at Guvna. It is a deliberately small, opinionated project — read [docs/VISION.md](docs/VISION.md) before proposing features; non-goals there are real.
 
 ## Development
 

@@ -7,7 +7,7 @@ app / any OpenAI-compatible client
         │  /v1/*  (port 20128, auth: Bearer admin/API key)
         ▼
 ┌──────────────────────────────────────────┐
-│  BruvRoute daemon (single static binary) │
+│  Guvna daemon (single static binary) │
 │  ┌────────────┐ ┌───────────────┐        │
 │  │  Router    │ │  Compression  │        │
 │  │  adaptors  │ │  pipeline     │        │
@@ -23,7 +23,7 @@ app / any OpenAI-compatible client
         └────────────────┘
 
 Separate, optional:  read-only web UI binary  (never in core)
-CLI:                bruvroute status / logs / chains (local + remote over gateway)
+CLI:                guvna status / logs / chains (local + remote over gateway)
 ```
 
 ## Components
@@ -36,13 +36,13 @@ CLI:                bruvroute status / logs / chains (local + remote over gatewa
 - **Loose validation, no catalogs**: chain creation validates provider exists and model is non-empty — NOT model existence. The upstream provider IS the catalog; a stale local catalog would reject valid new models (upstream 404s at request time and the chain falls over instead).
 - **Key pools + rotation**: providers take `key_envs: [K1, K2, ...]` (a single `key_env` still works = 1-key pool). Per-provider rotation strategy (`rotation:`): `round_robin` (default) / `least_used` / `sequential`, picking only healthy keys. Class-based quarantine (`quarantine:` per-provider overrides; defaults 24h auth / 60s rate_limit / 60s transient): 401/403 → `auth`, 429 → `rate_limit`, 5xx/network → `transient`; durations double per consecutive failure (capped). Success resets a key. Failover: on a quarantinable response the same request is retried on the next healthy key within the step retry budget (401/403 consume retries too — dead keys burn budget fast). All keys down → step treated as down → chain walks on. Streaming rotation is per-request; a mid-stream key death propagates an error chunk (no mid-stream swap). Key state (state/reason/failures/cool-off remaining/requests/tokens per key) is exposed in `/admin/status` `keys`; telemetry rows carry the serving `key`. Quarantine is in-memory (resets on restart, like step health).
 - **Model rewrite**: relay rewrites the request's `model` field per step (clients send logical names; upstream needs the real model). Everything else passes through untouched.
-- Provider adaptors: small per-provider interface (`Chat(ctx, body) (*http.Response, error)`), pattern from new-api's `relay_adaptor.go`. Two types built: `openai` (base + `/v1/chat/completions`) and `gemini` (base + `/v1beta/openai` + chat path — Gemini's official OpenAI-compat endpoint, passthrough no translation). Outbound requests carry `User-Agent: bruvroute/0.1` (bazaarlink throttles UA-less requests).
+- Provider adaptors: small per-provider interface (`Chat(ctx, body) (*http.Response, error)`), pattern from new-api's `relay_adaptor.go`. Two types built: `openai` (base + `/v1/chat/completions`) and `gemini` (base + `/v1beta/openai` + chat path — Gemini's official OpenAI-compat endpoint, passthrough no translation). Outbound requests carry `User-Agent: guvna/0.1` (bazaarlink throttles UA-less requests).
 - Auth: Bearer admin key (`ADMIN_KEY`) or client key (`API_KEYS`), always on; `/healthz` unauthenticated
 - Telemetry: in-memory event buffer, async batch flush to SQLite every 30s (pure-Go driver, no CGO); hot path never touches disk; crash loses <30s
 - Single process, one port. No dashboard in the process.
 
 ### 2. Compression pipeline
-Decision precedence (adapted from OmniRoute): per-request header (`x-bruvroute-compression`) → named profile → adaptive → config default → off. Cache-aware compression is always on (never touch already-cached prefixes).
+Decision precedence (adapted from OmniRoute): per-request header (`x-guvna-compression`) → named profile → adaptive → config default → off. Cache-aware compression is always on (never touch already-cached prefixes).
 
 v1 engines:
 1. **Caveman-style** — JSON rule packs + language packs + injected system prompt. Rule pack format and packs are MIT-licensed from JuliusBrussee/caveman and OmniRoute's `open-sse` compression config.
@@ -61,11 +61,11 @@ v2 (not in v1): LLMLingua-2 (ONNX MobileBERT, heavy — separate process or side
 ### 4. Config & data
 - **Config-as-code**: YAML in git (`config.yaml`): providers, keys via env, profiles, compression settings, ports, routing weights
 - **SQLite**: usage/telemetry only (request counts, tokens, errors). Never for config.
-- Data dir: `~/.bruvroute/` (config override, db, logs)
+- Data dir: `~/.guvna/` (config override, db, logs)
 
 ### 5. Security
 - Auth always on: one admin key (env `ADMIN_KEY` / `JWT_SECRET`), API keys for clients
-- Scoped tokens for remote CLI (`bruvroute connect`), revocable
+- Scoped tokens for remote CLI (`guvna connect`), revocable
 - No multi-user, no registration, no open dashboard
 
 ### 6. Web UI (v1, minimal, separate)

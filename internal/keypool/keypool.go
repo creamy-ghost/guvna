@@ -13,7 +13,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/creamy-ghost/bruvroute/internal/config"
+	"github.com/creamy-ghost/guvna/internal/config"
 )
 
 // Failure classes mirror upstream status semantics.

@@ -35,7 +35,7 @@ func (a *Authenticator) Middleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		token, ok := bearer(r.Header.Get("Authorization"))
 		if !ok || !a.Valid(token) {
-			w.Header().Set("WWW-Authenticate", `Bearer realm="bruvroute"`)
+			w.Header().Set("WWW-Authenticate", `Bearer realm="guvna"`)
 			http.Error(w, `{"error":{"message":"invalid api key","type":"invalid_request_error"}}`, http.StatusUnauthorized)
 			return
 		}
@@ -49,7 +49,7 @@ func (a *Authenticator) AdminMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		token, ok := bearer(r.Header.Get("Authorization"))
 		if !ok || !a.isAdmin(token) {
-			w.Header().Set("WWW-Authenticate", `Bearer realm="bruvroute"`)
+			w.Header().Set("WWW-Authenticate", `Bearer realm="guvna"`)
 			http.Error(w, `{"error":{"message":"admin key required"}}`, http.StatusUnauthorized)
 			return
 		}

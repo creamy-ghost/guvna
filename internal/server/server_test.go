@@ -10,14 +10,14 @@ import (
 	"testing"
 	"time"
 
-	"github.com/creamy-ghost/bruvroute/internal/auth"
-	"github.com/creamy-ghost/bruvroute/internal/chains"
-	"github.com/creamy-ghost/bruvroute/internal/config"
-	"github.com/creamy-ghost/bruvroute/internal/health"
-	"github.com/creamy-ghost/bruvroute/internal/keypool"
-	"github.com/creamy-ghost/bruvroute/internal/logring"
-	"github.com/creamy-ghost/bruvroute/internal/router"
-	"github.com/creamy-ghost/bruvroute/internal/telemetry"
+	"github.com/creamy-ghost/guvna/internal/auth"
+	"github.com/creamy-ghost/guvna/internal/chains"
+	"github.com/creamy-ghost/guvna/internal/config"
+	"github.com/creamy-ghost/guvna/internal/health"
+	"github.com/creamy-ghost/guvna/internal/keypool"
+	"github.com/creamy-ghost/guvna/internal/logring"
+	"github.com/creamy-ghost/guvna/internal/router"
+	"github.com/creamy-ghost/guvna/internal/telemetry"
 )
 
 type testEnv map[string]string
@@ -751,8 +751,8 @@ func TestStepParamsMergedFillMissing(t *testing.T) {
 	if resp.StatusCode != http.StatusOK {
 		t.Fatalf("status = %d, want 200", resp.StatusCode)
 	}
-	if got := resp.Header.Get("X-Bruvroute-Step"); got != "a/m-a" {
-		t.Errorf("X-Bruvroute-Step = %q, want a/m-a", got)
+	if got := resp.Header.Get("X-Guvna-Step"); got != "a/m-a" {
+		t.Errorf("X-Guvna-Step = %q, want a/m-a", got)
 	}
 	body := <-bodies
 	if bodyField(t, body, "reasoning_effort") != "high" {

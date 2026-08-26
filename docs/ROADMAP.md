@@ -2,7 +2,7 @@
 
 Build order with definition of done per phase. No time estimates — this is a personal project, build at your own pace. Each phase ends with something working and verifiable.
 
-**Use-ready cut (2026-08-16):** BruvRoute is live and usable daily. Gateway runs on the VPS behind caddy (`https://gateway.example.com:9443`), chains self-heal (failure marking + cool-off), and usage/health are visible from the laptop via the remote CLI. Everything below the cut is daily-use; everything after is growth.
+**Use-ready cut (2026-08-16):** Guvna is live and usable daily. Gateway runs on the VPS behind caddy (`https://gateway.example.com:9443`), chains self-heal (failure marking + cool-off), and usage/health are visible from the laptop via the remote CLI. Everything below the cut is daily-use; everything after is growth.
 
 ---
 
@@ -12,9 +12,9 @@ Build order with definition of done per phase. No time estimates — this is a p
 - `GET /v1/models` (chain names) + `POST /v1/chat/completions`, non-streaming + SSE streaming passthrough (keep-alives, error propagation mid-stream)
 - Chain-based routing core: named chains = (provider, model) steps, model rewrite per step, fallback across steps, `default_chain` catch-all — **superseded (see Phase 4b): no default chains, clients create chains**
 - Two adaptor types: `openai` (bazaarlink, groq, mistral) and `gemini` (via OpenAI-compat endpoint)
-- Config-as-code YAML (providers, chains, keys from env), `~/.bruvroute/config.yaml` override
+- Config-as-code YAML (providers, chains, keys from env), `~/.guvna/config.yaml` override
 - Auth: admin key (`ADMIN_KEY`) + client keys (`API_KEYS`), always on; `/healthz` unauthenticated
-- Async batched SQLite telemetry (~/.bruvroute/bruvroute.db, 30s flush)
+- Async batched SQLite telemetry (~/.guvna/guvna.db, 30s flush)
 - **Done:** curl a chat completion (streaming + non-streaming) through chains against real providers — verified live: bazaarlink (free), groq (fast), gemini (smart)
 
 ## Phase 2 — Failure marking (DONE 2026-08-16)
@@ -31,16 +31,16 @@ Build order with definition of done per phase. No time estimates — this is a p
 - `-healthcheck` flag (binary probes own /healthz — no shell in image), `-data` flag for the volume
 - Docker compose: `network_mode: host` (the VPS can't create bridge networks), `mem_limit: 400m`, `GOMEMLIMIT=256MiB`, named volume `/data`, restart unless-stopped
 - Caddy vhost `gateway.example.com:9443` → 127.0.0.1:20128 (port 443 collides with another TLS service)
-- Keys via `/home/alex/bruvroute/.env` (chmod 600), never in git
+- Keys via `/home/alex/guvna/.env` (chmod 600), never in git
 - **Done:** streaming chat + admin status through the caddy subdomain from the laptop, container health checks green
 
 ## Phase 4 — Remote CLI (DONE 2026-08-16, partial)
 
 - Admin surface in core: `GET /admin/status` (uptime, chains, step health, usage aggregates) + `GET /admin/logs` (ring buffer tail), admin-key-only
-- `bruvroute-cli` binary: `status` (table or `--json`) + `logs [-n]`, local (`http://127.0.0.1:20128`) or remote (`--url https://gateway...:9443`, `--token`/`BRUVROUTE_ADMIN_KEY`)
+- `guvna-cli` binary: `status` (table or `--json`) + `logs [-n]`, local (`http://127.0.0.1:20128`) or remote (`--url https://gateway...:9443`, `--token`/`GUVNA_ADMIN_KEY`)
 - Scoped tokens: the admin key over the gateway's HTTPS endpoint — no new port exposed
 - **Not yet:** `connect` subcommand with revocable scoped tokens, `config`, `providers`
-- **Done when:** `bruvroute-cli status` from laptop shows real usage/health of the the VPS instance — verified live
+- **Done when:** `guvna-cli status` from laptop shows real usage/health of the the VPS instance — verified live
 
 ## Phase 4b — Custom chains API (DONE 2026-08-16)
 
@@ -48,7 +48,7 @@ Build order with definition of done per phase. No time estimates — this is a p
 - `POST /v1/chains` (any valid API key — apps self-provision), `DELETE /v1/chains/{name}`, `GET /v1/chains`; persisted to `<data-dir>/chains.yaml` (atomic rewrite), merged over config at startup
 - Provider-prefixed passthrough: `<prefix>/<model>` routes directly to a provider (strip suffix when known, else full name; per-provider `prefixes:` in config)
 - Loose validation: provider must exist, model non-empty — no model-existence checks (upstream is the catalog; stale local catalogs would reject valid new models)
-- `bruvroute-cli chains list|add|rm` (local + remote)
+- `guvna-cli chains list|add|rm` (local + remote)
 - **Done:** create a chain via API from the laptop, chat through it, survive a container restart — verified live on the VPS (chain `myfree` persisted across `docker restart`)
 
 ## Phase 4c — Key pools & rotation (DONE 2026-08-17)
@@ -64,7 +64,7 @@ Build order with definition of done per phase. No time estimates — this is a p
 ## Phase 5 — Catalog sync (parked — superseded by loose validation)
 
 - ~~Subscribe-sync script: pull OmniRoute MIT catalog files, normalize, diff + commit to git~~ — **cancelled 2026-08-16**: catalogs go stale (orcarouter ships new free models weekly); a stale catalog rejects valid new models — worse than a typo failing at request time. The upstream provider IS the catalog for a single-user gateway. Revisit only if chain creation needs model discovery/completion.
-- `bruvroute providers list` / `providers test` CLI
+- `guvna providers list` / `providers test` CLI
 - Free-tier health flags (per-provider hasFree + freeNote from catalog)
 - **Done when:** a fresh sync produces a clean git commit and provider list is queryable
 
@@ -85,9 +85,9 @@ Build order with definition of done per phase. No time estimates — this is a p
 
 ## Phase 8 — Arch local install
 
-- systemd user unit, data dir `~/.bruvroute/`, env config
+- systemd user unit, data dir `~/.guvna/`, env config
 - app rewired: config.yaml points at the live gateway (drop-in port 20128)
-- **Done when:** app routes through BruvRoute on Arch and via the VPS
+- **Done when:** app routes through Guvna on Arch and via the VPS
 
 ## Phase 9 — Hardening + release
 

@@ -1,26 +1,26 @@
-# BruvRoute
+# Guvna
 
 Low-resource AI gateway in Go. One OpenAI-compatible endpoint that routes to free-tier LLM providers through named, self-healing chains — built for one user, runs in ~15–40MB of RAM.
 
-[![CI](https://github.com/creamy-ghost/bruvroute/actions/workflows/ci.yml/badge.svg)](https://github.com/creamy-ghost/bruvroute/actions/workflows/ci.yml)
+[![CI](https://github.com/creamy-ghost/guvna/actions/workflows/ci.yml/badge.svg)](https://github.com/creamy-ghost/guvna/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
 ## Why
 
-Most LLM gateways are multi-tenant platforms: databases, dashboards, hundreds of MB of RAM. BruvRoute is the opposite bet — **config-as-code, no database, one static binary** (~16MB, distroless image ~13MB):
+Most LLM gateways are multi-tenant platforms: databases, dashboards, hundreds of MB of RAM. Guvna is the opposite bet — **config-as-code, no database, one static binary** (~16MB, distroless image ~13MB):
 
 - **Chain-based routing** — define ordered provider/model fallback steps per use case (`mychain` → bazaarlink qwen → groq llama → mistral codestral). Clients call chain names; real provider model names never leak into your apps.
 - **Key pools** — per-provider rotation (round-robin / least-used / sequential) with class-based quarantine (auth / rate-limit / transient) and automatic failover. One dead key never burns the pool.
 - **Provider-prefixed passthrough** — call any catalog model directly as `<provider>/<model>` when you don't need a chain.
 - **Self-healing** — unhealthy providers cool off (60s → 10min, auto-recovery); chains fail over across steps; no silent mid-stream restarts.
-- **Remote CLI** — `bruvroute-cli status|logs|chains` against the gateway's HTTPS endpoint, from anywhere.
+- **Remote CLI** — `guvna-cli status|logs|chains` against the gateway's HTTPS endpoint, from anywhere.
 - **Observability** — async SQLite telemetry (requests, tokens, serving key), `/admin/status` + `/admin/logs`.
 - **Free-tier native** — ships with configs for Bazaarlink, Groq, Mistral, Gemini, OrcaRouter free tiers.
 
 ## Quickstart
 
 ```sh
-git clone https://github.com/creamy-ghost/bruvroute && cd bruvroute
+git clone https://github.com/creamy-ghost/guvna && cd guvna
 cp .env.example .env        # fill in ADMIN_KEY, API_KEYS, and at least one provider key
 docker compose -f deploy/docker-compose.yml up -d
 ```
@@ -28,12 +28,12 @@ docker compose -f deploy/docker-compose.yml up -d
 Or without Docker:
 
 ```sh
-go install github.com/creamy-ghost/bruvroute/cmd/bruvroute@latest
+go install github.com/creamy-ghost/guvna/cmd/guvna@latest
 set -a; source .env; set +a
-bruvroute -config config.yaml          # listens on :20128
+guvna -config config.yaml          # listens on :20128
 ```
 
-Tagged releases also publish an image to `ghcr.io/creamy-ghost/bruvroute`.
+Tagged releases also publish an image to `ghcr.io/creamy-ghost/guvna`.
 
 ### First request
 
@@ -46,7 +46,7 @@ curl -X POST http://127.0.0.1:20128/v1/chains \
         {"provider":"bazaarlink","model":"qwen/qwen3.7-flash:free"},
         {"provider":"groq","model":"llama-3.3-70b-versatile"}]}'
 
-# chat — any OpenAI SDK works, just point base_url at BruvRoute
+# chat — any OpenAI SDK works, just point base_url at Guvna
 curl http://127.0.0.1:20128/v1/chat/completions \
   -H "Authorization: Bearer $CLIENT_KEY" -H "Content-Type: application/json" \
   -d '{"model":"myfree","messages":[{"role":"user","content":"hello"}]}'
@@ -57,9 +57,9 @@ If `bazaarlink` is down or rate-limited, the same request transparently falls th
 Manage chains remotely:
 
 ```sh
-export BRUVROUTE_URL=https://your-gateway.example.com BRUVROUTE_ADMIN_KEY=...
-bruvroute-cli chains list
-bruvroute-cli status
+export GUVNA_URL=https://your-gateway.example.com GUVNA_ADMIN_KEY=...
+guvna-cli chains list
+guvna-cli status
 ```
 
 ## Configuration

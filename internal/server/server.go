@@ -16,15 +16,15 @@ import (
 	"strings"
 	"time"
 
-	"github.com/creamy-ghost/bruvroute/internal/adaptors"
-	"github.com/creamy-ghost/bruvroute/internal/auth"
-	"github.com/creamy-ghost/bruvroute/internal/chains"
-	"github.com/creamy-ghost/bruvroute/internal/config"
-	"github.com/creamy-ghost/bruvroute/internal/health"
-	"github.com/creamy-ghost/bruvroute/internal/keypool"
-	"github.com/creamy-ghost/bruvroute/internal/logring"
-	"github.com/creamy-ghost/bruvroute/internal/router"
-	"github.com/creamy-ghost/bruvroute/internal/telemetry"
+	"github.com/creamy-ghost/guvna/internal/adaptors"
+	"github.com/creamy-ghost/guvna/internal/auth"
+	"github.com/creamy-ghost/guvna/internal/chains"
+	"github.com/creamy-ghost/guvna/internal/config"
+	"github.com/creamy-ghost/guvna/internal/health"
+	"github.com/creamy-ghost/guvna/internal/keypool"
+	"github.com/creamy-ghost/guvna/internal/logring"
+	"github.com/creamy-ghost/guvna/internal/router"
+	"github.com/creamy-ghost/guvna/internal/telemetry"
 )
 
 // KeepAliveInterval is how long the relay waits without upstream data before
@@ -152,7 +152,7 @@ func (s *Server) handleModels(w http.ResponseWriter, r *http.Request) {
 			Object  string `json:"object"`
 			Created int64  `json:"created"`
 			OwnedBy string `json:"owned_by"`
-		}{ID: n, Object: "model", Created: time.Now().Unix(), OwnedBy: "bruvroute"})
+		}{ID: n, Object: "model", Created: time.Now().Unix(), OwnedBy: "guvna"})
 	}
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(resp)
@@ -478,7 +478,7 @@ func (s *Server) relaySuccess(w http.ResponseWriter, r *http.Request, step route
 		in, out := telemetry.ParseUsage(body)
 		s.poolRecord(keyEnv, step, chain, req, resp.StatusCode, in, out, "")
 		w.Header().Set("Content-Type", resp.Header.Get("Content-Type"))
-		w.Header().Set("X-Bruvroute-Step", step.Provider+"/"+step.Model)
+		w.Header().Set("X-Guvna-Step", step.Provider+"/"+step.Model)
 		w.WriteHeader(resp.StatusCode)
 		w.Write(body)
 		return
@@ -495,7 +495,7 @@ func (s *Server) relayStream(w http.ResponseWriter, r *http.Request, step router
 	w.Header().Set("Content-Type", "text/event-stream")
 	w.Header().Set("Cache-Control", "no-cache")
 	w.Header().Set("X-Accel-Buffering", "no")
-	w.Header().Set("X-Bruvroute-Step", step.Provider+"/"+step.Model)
+	w.Header().Set("X-Guvna-Step", step.Provider+"/"+step.Model)
 	w.WriteHeader(resp.StatusCode)
 	flusher.Flush()
 

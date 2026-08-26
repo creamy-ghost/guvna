@@ -1,4 +1,4 @@
-// BruvRoute — low-resource single-user AI gateway.
+// Guvna — low-resource single-user AI gateway.
 package main
 
 import (
@@ -16,25 +16,25 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/creamy-ghost/bruvroute/internal/auth"
-	"github.com/creamy-ghost/bruvroute/internal/chains"
-	"github.com/creamy-ghost/bruvroute/internal/config"
-	"github.com/creamy-ghost/bruvroute/internal/health"
-	"github.com/creamy-ghost/bruvroute/internal/logring"
-	"github.com/creamy-ghost/bruvroute/internal/router"
-	"github.com/creamy-ghost/bruvroute/internal/server"
-	"github.com/creamy-ghost/bruvroute/internal/telemetry"
+	"github.com/creamy-ghost/guvna/internal/auth"
+	"github.com/creamy-ghost/guvna/internal/chains"
+	"github.com/creamy-ghost/guvna/internal/config"
+	"github.com/creamy-ghost/guvna/internal/health"
+	"github.com/creamy-ghost/guvna/internal/logring"
+	"github.com/creamy-ghost/guvna/internal/router"
+	"github.com/creamy-ghost/guvna/internal/server"
+	"github.com/creamy-ghost/guvna/internal/telemetry"
 )
 
 const (
 	envAdminKey  = "ADMIN_KEY"
 	envAPIKeys   = "API_KEYS"
 	flushEvery   = 30 * time.Second
-	defaultDBDir = ".bruvroute"
+	defaultDBDir = ".guvna"
 )
 
 func main() {
-	log.SetPrefix("bruvroute: ")
+	log.SetPrefix("guvna: ")
 	configPath := flag.String("config", "config.yaml", "path to config.yaml")
 	dataDir := flag.String("data", dbDir(), "data directory (config override + SQLite)")
 	healthCheck := flag.Bool("healthcheck", false, "check /healthz of a running instance and exit 0/1")
@@ -65,7 +65,7 @@ func main() {
 		log.Fatalf("%s env var required (comma-separated client keys)", envAPIKeys)
 	}
 
-	dbPath := filepath.Join(*dataDir, "bruvroute.db")
+	dbPath := filepath.Join(*dataDir, "guvna.db")
 	if err := os.MkdirAll(*dataDir, 0o700); err != nil {
 		log.Fatalf("data dir: %v", err)
 	}
@@ -129,7 +129,7 @@ func doHealthCheck(configPath string) int {
 	return 0
 }
 
-// loadConfig prefers ~/.bruvroute/config.yaml; falls back to the flag path.
+// loadConfig prefers ~/.guvna/config.yaml; falls back to the flag path.
 func loadConfig(flagPath string) (*config.Config, error) {
 	homeCfg := filepath.Join(dbDir(), "config.yaml")
 	path := flagPath

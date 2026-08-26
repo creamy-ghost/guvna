@@ -1,4 +1,4 @@
-module github.com/creamy-ghost/bruvroute
+module github.com/creamy-ghost/guvna
 
 go 1.26.6
 

@@ -3,7 +3,7 @@
 ## High-level
 
 ```
-app / any OpenAI-compatible client
+any OpenAI-compatible client
         │  /v1/*  (port 20128, auth: Bearer admin/API key)
         ▼
 ┌──────────────────────────────────────────┐
@@ -83,4 +83,4 @@ v2 (not in v1): LLMLingua-2 (ONNX MobileBERT, heavy — separate process or side
 - `REQUIRE_API_KEY` equivalent always on when exposed
 - Config in git, not DB
 - UI never in core process
-- Port 20128 (app drop-in)
+- Port 20128

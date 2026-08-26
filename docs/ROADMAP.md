@@ -86,8 +86,8 @@ Build order with definition of done per phase. No time estimates — this is a p
 ## Phase 8 — Arch local install
 
 - systemd user unit, data dir `~/.guvna/`, env config
-- app rewired: config.yaml points at the live gateway (drop-in port 20128)
-- **Done when:** app routes through Guvna on Arch and via the VPS
+- Existing clients rewired: config points at the live gateway (drop-in port 20128)
+- **Done when:** existing clients route through Guvna on Arch and via the VPS
 
 ## Phase 9 — Hardening + release
 

@@ -6,7 +6,6 @@
 
 # Private infra runbooks — never commit
 docs/runbook-*.md
-docs/DECISIONS.md
 
 # J-space working ledger
 .jspace/

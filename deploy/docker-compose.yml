@@ -1,6 +1,6 @@
-# BruvRoute on the VPS. Secrets come from .env (see .env.the VPS.example).
-# host network: the VPS's docker can't create bridge networks (no iptables),
-# and caddy (also host-network) reaches the app on 127.0.0.1:20128.
+# BruvRoute. Secrets come from .env (see .env.example).
+# host network: use this when your Docker cannot create bridge networks (no iptables),
+# and a host-network reverse proxy reaches the app on 127.0.0.1:20128.
 services:
   bruvroute:
     build:

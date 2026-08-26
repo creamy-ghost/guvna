@@ -1,124 +1,103 @@
 # Deployment
 
-**Status 2026-08-16: the VPS deployment is LIVE and the primary daily route.** Arch local is deferred (Phase 8).
+BruvRoute is a single static binary with config-as-code. Two supported ways to run it.
 
-## Target 1 — the VPS VPS (LIVE, primary)
+## Option A — Docker Compose
 
-Facts (verified 2026-08-14): Debian 13 trixie, x86_64, 1 core, 967MiB RAM (~281MiB available), 2.0GiB swap, 25G disk (14G free); Docker 29.6.2; already running a TLS panel, the VPS-web-1 (8000), caddy 2.9-alpine. SSH: `ssh the VPS` (user alex).
+```sh
+git clone https://github.com/creamy-ghost/bruvroute && cd bruvroute
+cp .env.example .env              # add ADMIN_KEY + API_KEYS + provider keys
+docker compose -f deploy/docker-compose.yml up -d
+```
 
-### Live endpoint
+The compose file builds the distroless image locally (~13MB, no shell, runs as nonroot) and mounts a named volume at `/data` for SQLite telemetry + `chains.yaml`.
 
-- Gateway: `http://127.0.0.1:20128` on the host (host network mode)
-- Public: `https://gateway.example.com:9443` (caddy vhost, auto-TLS)
-  - **:9443 not :443** — another TLS service also binds `*:443`; two listeners on 443 cause flaky TLS handshakes. Same reason the old new-api vhost used :9443.
+Prefer the published image once available:
 
-### Layout on the VPS
+```sh
+docker run -d --name bruvroute \
+  -p 20128:20128 \
+  --env-file .env \
+  -e GOMEMLIMIT=256MiB \
+  -v bruvroute-data:/data \
+  -v "$PWD/config.yaml:/config.yaml:ro" \
+  ghcr.io/creamy-ghost/bruvroute:latest
+```
 
-- `/home/alex/bruvroute/docker-compose.yml` + `.env` (chmod 600 — ADMIN_KEY, API_KEYS, provider keys; **values must be UNQUOTED** — docker `--env-file` does not strip quotes, unlike shell sourcing)
-- Named volume `bruvroute_bruvroute-data` mounted at `/data` (SQLite telemetry lives there; chains.yaml too)
-- Container: `bruvroute:latest`, distroless static:nonroot, ~13MB image, `mem_limit: 400m`, `GOMEMLIMIT=256MiB`, restart unless-stopped
-- Healthcheck: `/bruvroute -healthcheck -config /config.yaml` (binary probes own /healthz — no shell in image)
+## Option B — Plain binary / systemd user unit
 
-### Keys & rotation
+```sh
+go install github.com/creamy-ghost/bruvroute/cmd/bruvroute@latest
+cp .env.example .env && set -a && source .env && set +a   # or use systemd EnvironmentFile=
+bruvroute -config config.yaml                             # data dir defaults to ~/.bruvroute
+```
 
-Provider keys live in the container env via `key_envs` lists in config.yaml. Multiple keys per provider form a rotation pool:
+A minimal unit runs it as your user on port 20128, keys via env, never in git.
+
+## TLS exposure
+
+Keep the gateway localhost-only unless you need remote clients. When exposing:
+
+- Terminate TLS in front (caddy example below). Auth is always on (admin key + client API keys), but keys should still travel over TLS.
+
+```
+gateway.example.com {
+  reverse_proxy 127.0.0.1:20128
+}
+```
+
+- If another service already binds `*:443`, put the gateway vhost on a different port (e.g. `:9443`) — two listeners on 443 cause flaky TLS handshakes.
+
+## Keys & rotation
+
+Provider keys live in env via `key_envs` lists in config.yaml; multiple keys per provider form a rotation pool:
 
 - `rotation:` per provider — `round_robin` (default) / `least_used` / `sequential`
-- Class-based quarantine — 401/403 → `auth` (24h), 429 → `rate_limit` (60s), 5xx/network → `transient` (60s); doubles per consecutive failure; success resets
+- Class-based quarantine — 401/403 → `auth` (24h), 429 → `rate_limit` (60s), 5xx/network → `transient` (60s); cool-off doubles per consecutive failure; success resets
 - On a quarantinable response the same request retries on the next healthy key (within the step retry budget); all keys down → chain falls to the next step
-- Per-key state is in `/admin/status` → `keys` (state/reason/failures/cool-off remaining/requests/tokens); telemetry rows carry the serving `key`
-- Quarantine is in-memory — a restart clears it (all keys start healthy)
+- Per-key state is visible in `/admin/status` → `keys`; telemetry rows carry the serving `key`
+- Quarantine is in-memory — restart clears it
 
-To add or rotate a provider key: edit `.env` on the VPS (unquoted `KEY=value`), `docker compose up -d --force-recreate`. Deliberately breaking a key is the documented way to test failover:
+To rotate a key: edit `.env`, then `docker compose up -d --force-recreate` (or restart the process).
 
-```sh
-sed -i 's/^BAZAARLINK_2_KEY=.*/BAZAARLINK_2_KEY=sk-invalid/' /home/alex/bruvroute/.env
-docker compose up -d --force-recreate   # next rotation hit quarantines it, chain still serves
-```
+## Chains workflow
 
-### Ops commands
-
-```sh
-ssh the VPS
-cd /home/alex/bruvroute
-docker compose up -d          # start / update
-docker compose ps             # status + health
-docker logs bruvroute -f      # logs
-docker compose up -d --build  # rebuild after a push (needs image transfer, see below)
-```
-
-Ship a new image (laptop → the VPS; the VPS is too small to build Go comfortably):
-
-```sh
-docker build -t bruvroute:latest -f deploy/Dockerfile .
-docker save bruvroute:latest | gzip | ssh the VPS "docker load"
-ssh the VPS "cd /home/alex/bruvroute && docker compose up -d"
-```
-
-Caddy (vhost at `/home/alex/caddy/Caddyfile`, reload inside container):
-
-```sh
-ssh the VPS "docker exec caddy caddy reload --config /etc/caddy/Caddyfile"
-```
-
-### Remote observability from the laptop
-
-```sh
-export BRUVROUTE_URL=https://gateway.example.com:9443 BRUVROUTE_ADMIN_KEY=...
-bruvroute-cli status          # chains, step health, usage table (--json for raw)
-bruvroute-cli logs -n 100     # tail the in-memory ring
-```
-
-Admin endpoints (`/admin/status`, `/admin/logs`) are admin-key-only; nothing new is exposed on the network.
-
-### Chains (no default chains — clients create their own)
-
-The gateway starts with **zero chains**. Clients (any valid API key — apps self-provision) create them per use case; chains persist in `/data/chains.yaml` (volume) and survive restarts. Config-defined chains also load (merged, conflicts skipped with a warning).
+The gateway starts with **zero chains**. Clients create them per use case (any valid API key); chains persist in `/data/chains.yaml` and survive restarts. Config-defined chains also load (merged, conflicts skipped with a warning).
 
 ```sh
 # API (client key)
-curl -X POST https://gateway.example.com:9443/v1/chains \
+curl -X POST http://127.0.0.1:20128/v1/chains \
   -H "Authorization: Bearer $CLIENT_KEY" -H "Content-Type: application/json" \
   -d '{"name":"myfree","steps":[{"provider":"bazaarlink","model":"qwen/qwen3.7-flash:free"},{"provider":"groq","model":"llama-3.3-70b-versatile"}]}'
-curl -X DELETE https://gateway.example.com:9443/v1/chains/myfree -H "Authorization: Bearer $CLIENT_KEY"
+curl -X DELETE http://127.0.0.1:20128/v1/chains/myfree -H "Authorization: Bearer $CLIENT_KEY"
 
-# CLI (same surface, remote-capable)
+# CLI (same surface, works remotely over HTTPS)
 bruvroute-cli chains list
 bruvroute-cli chains add myfree --step bazaarlink:qwen/qwen3.7-flash:free --step groq:llama-3.3-70b-versatile
 bruvroute-cli chains rm myfree
 ```
 
-Chat with a chain name, or bypass chains entirely with a provider-prefixed model (`groq/llama-3.3-70b-versatile`, or any `orcarouter`-namespaced model like `openai/gpt-5.6-luna`). Unknown model → 404 with a pointer to the creation API.
+Chat with a chain name as the model, or bypass chains entirely with a provider-prefixed model (`groq/llama-3.3-70b-versatile`). Unknown model → 404 with a pointer to the creation API.
 
-### Gotchas learned
+## Observability
 
-- the VPS's docker **cannot create bridge networks** (iptables setup fails) → `network_mode: host`
-- `docker --env-file` does **not** strip quotes around values (shell `source` does) — unquote before use
-- Nonroot (UID 65532) cannot `mkdir /data` at container root — the Dockerfile creates + chowns it in the build stage
-- Client disconnects mid-stream are dropped silently (never recorded as upstream 502)
-
-## Target 2 — Arch (local, deferred to Phase 8)
-
-- systemd user unit (`bruvroute.service`), runs as this user, port 20128
-- Data dir `~/.bruvroute/` (config override, SQLite telemetry, logs)
-- Keys via env / keyring, never in git
-- Precedent: the removed `prior-gateway.service` user unit used this exact pattern
-
-### app drop-in facts
-
-`~/.app/config.yaml` currently references a dead provider:
-
-```yaml
-provider: "prior-gateway"
-base_url: http://127.0.0.1:20128/v1
-api_key: REDACTED-DEAD-KEY   # dead — prior-gateway was fully removed 2026-08-14
+```sh
+export BRUVROUTE_URL=http://127.0.0.1:20128 BRUVROUTE_ADMIN_KEY=...
+bruvroute-cli status          # chains, step health, usage table (--json for raw)
+bruvroute-cli logs -n 100     # tail the in-memory ring
+curl -s -H "Authorization: Bearer $ADMIN_KEY" http://127.0.0.1:20128/admin/status | jq
 ```
 
-- BruvRoute on port 20128 is a drop-in: only the api_key needs updating
-- app rewiring is explicitly out of the current scope (Phase 8)
+Admin endpoints (`/admin/status`, `/admin/logs`) are admin-key-only.
+
+## Gotchas worth knowing
+
+- Docker `--env-file` does **not** strip quotes around values (shell `source` does) — keep values unquoted
+- Nonroot (UID 65532) cannot `mkdir /data` at container root — the image creates + chowns it at build time
+- Client disconnects mid-stream are dropped silently (never recorded as upstream failures)
 
 ## Security defaults
 
 - Auth always on (admin key + API keys) — never exposed without it
-- Scoped revocable tokens for remote CLI
-- TLS via caddy when exposed; localhost-only otherwise
+- Remote CLI authenticates against the same gateway HTTPS endpoint
+- TLS via your reverse proxy when exposed; localhost-only otherwise

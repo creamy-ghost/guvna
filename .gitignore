@@ -3,3 +3,9 @@
 !.env.example
 !deploy/.env.the VPS.example
 *.db
+
+# Private infra runbooks — never commit
+docs/runbook-*.md
+
+# J-space working ledger
+.jspace/

@@ -9,8 +9,11 @@ RUN go mod download
 COPY . .
 RUN CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o /out/guvna-dashboard ./cmd/guvna-dashboard
 
-FROM gcr.io/distroless/static-debian12:nonroot
+# scratch, not distroless: the binary is fully static (no cgo, no TLS
+# outbound — it speaks plain HTTP to the gateway on localhost), and scratch
+# needs no registry pull at all. Numeric UID 65532 mirrors distroless nonroot.
+FROM scratch
 COPY --from=build /out/guvna-dashboard /guvna-dashboard
 EXPOSE 20129
-USER nonroot
+USER 65532:65532
 ENTRYPOINT ["/guvna-dashboard"]

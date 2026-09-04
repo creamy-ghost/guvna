@@ -23,5 +23,35 @@ services:
       start_period: 5s
       retries: 3
 
+  # Optional web UI. Only starts with an explicit profile so the default
+  # deploy stays gateway-only (zero RAM when off):
+  #   docker compose -f deploy/docker-compose.yml --profile dashboard up -d
+  # Never exposed directly — put a reverse proxy with access control
+  # (basic_auth / IP allowlist) in front. See docs/DASHBOARD.md.
+  dashboard:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile.dashboard
+    image: guvna-dashboard:latest
+    container_name: guvna-dashboard
+    restart: unless-stopped
+    mem_limit: 128m
+    network_mode: host
+    profiles:
+      - dashboard
+    environment:
+      - GOMEMLIMIT=64MiB
+      - GUVNA_URL=http://127.0.0.1:20128
+    env_file: .env
+    depends_on:
+      guvna:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "/guvna-dashboard", "-healthcheck", "-addr", "127.0.0.1:20129"]
+      interval: 30s
+      timeout: 3s
+      start_period: 5s
+      retries: 3
+
 volumes:
   guvna-data:

@@ -1,0 +1,23 @@
+{{define "overview"}}<div hx-get="/partial/overview" hx-trigger="every 5s" hx-target="#panel" hx-swap="innerHTML" hx-sync="#panel:replace">
+{{if .Error}}<div class="error" role="alert">{{.Error}} <button hx-get="/partial/overview" hx-target="#panel" hx-swap="innerHTML">Retry</button></div>{{else}}
+<div class="cards">
+<div><article><p class="num">{{.Uptime}}</p><p class="lbl">uptime</p></article></div>
+<div><article><p class="num">{{len .Chains}}</p><p class="lbl">chains</p></article></div>
+<div><article><p class="num">{{.StepsDown}}</p><p class="lbl">steps down</p></article></div>
+<div><article><p class="num">{{.Usage.Requests}}</p><p class="lbl">requests</p></article></div>
+<div><article><p class="num">{{.Usage.Errors}}</p><p class="lbl">errors</p></article></div>
+<div><article><p class="num">{{.Usage.TokensIn}} / {{.Usage.TokensOut}}</p><p class="lbl">tokens in / out</p></article></div>
+</div>
+{{if .Chains}}<p><strong>Chains:</strong> {{range $i, $c := .Chains}}{{if $i}} &middot; {{end}}<code>{{$c}}</code>{{end}}</p>{{else}}<p class="muted">No chains yet — create one on the Chains tab.</p>{{end}}
+<h3>Usage by provider</h3>
+{{if .Usage.ByProvider}}<table>
+<thead><tr><th>Provider</th><th class="num">Requests</th><th class="num">Errors</th><th class="num">Tokens in</th><th class="num">Tokens out</th></tr></thead>
+<tbody>{{range .Usage.ByProvider}}<tr><td>{{.Provider}}</td><td class="num">{{.Requests}}</td><td class="num">{{.Errors}}</td><td class="num">{{.TokensIn}}</td><td class="num">{{.TokensOut}}</td></tr>{{end}}</tbody>
+</table>{{else}}<p class="muted">No usage recorded yet.</p>{{end}}
+{{if .DownSteps}}<h3>Down steps</h3>
+<table>
+<thead><tr><th>Provider</th><th>Model</th><th class="num">Failures</th><th>Cool-off left</th></tr></thead>
+<tbody>{{range .DownSteps}}<tr><td>{{.Provider}}</td><td>{{.Model}}</td><td class="num">{{.Failures}}</td><td>{{.DownFor}}</td></tr>{{end}}</tbody>
+</table>{{end}}
+{{end}}
+</div>{{end}}

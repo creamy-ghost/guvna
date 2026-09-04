@@ -1,0 +1,27 @@
+{{define "keys"}}<div hx-get="/partial/keys" hx-trigger="every 5s" hx-target="#panel" hx-swap="innerHTML" hx-sync="#panel:replace">
+{{if .Error}}<div class="error" role="alert">{{.Error}} <button hx-get="/partial/keys" hx-target="#panel" hx-swap="innerHTML">Retry</button></div>{{else}}
+<h3>Key pools</h3>
+{{if .Keys}}<table>
+<thead><tr><th>Provider</th><th>Key env</th><th>State</th><th>Reason</th><th class="num">Failures</th><th class="num">Requests</th><th class="num">Tokens in/out</th></tr></thead>
+<tbody>{{range .Keys}}<tr>
+<td>{{.Provider}}</td>
+<td><code>{{.Env}}</code></td>
+<td>{{if eq .State "healthy"}}<span class="badge ok">healthy</span>{{else}}<span class="badge down">quarantined</span>{{end}}</td>
+<td>{{if .Reason}}{{.Reason}}{{else}}<span class="muted">&mdash;</span>{{end}}</td>
+<td class="num">{{.Failures}}</td>
+<td class="num">{{.Requests}}</td>
+<td class="num">{{.TokensIn}} / {{.TokensOut}}</td>
+</tr>{{end}}</tbody>
+</table>{{else}}<p class="muted">No key pools reported.</p>{{end}}
+<h3>Step health</h3>
+{{if .Steps}}<table>
+<thead><tr><th>Provider</th><th>Model</th><th class="num">Failures</th><th>State</th></tr></thead>
+<tbody>{{range .Steps}}<tr>
+<td>{{.Provider}}</td>
+<td>{{.Model}}</td>
+<td class="num">{{.Failures}}</td>
+<td>{{if .Down}}<span class="badge down">down {{.DownFor}}</span>{{else}}<span class="badge ok">ok</span>{{end}}</td>
+</tr>{{end}}</tbody>
+</table>{{else}}<p class="muted">No step observations yet — steps appear after their first failure or success.</p>{{end}}
+{{end}}
+</div>{{end}}

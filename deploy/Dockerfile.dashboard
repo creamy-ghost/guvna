@@ -1,0 +1,16 @@
+# guvna-dashboard — multi-stage build to a distroless static image.
+# Same shape as the gateway image: ~15MB, no shell, runs as nonroot.
+# Built only on demand (compose profile), never part of the core image.
+
+FROM golang:1.26-alpine AS build
+WORKDIR /src
+COPY go.mod go.sum ./
+RUN go mod download
+COPY . .
+RUN CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o /out/guvna-dashboard ./cmd/guvna-dashboard
+
+FROM gcr.io/distroless/static-debian12:nonroot
+COPY --from=build /out/guvna-dashboard /guvna-dashboard
+EXPOSE 20129
+USER nonroot
+ENTRYPOINT ["/guvna-dashboard"]

@@ -1,0 +1,125 @@
+/* Guvna dashboard — small custom layer over Pico. Dark-first, dense tables. */
+:root {
+  --pico-font-size: 15px;
+}
+
+header h1 {
+  margin-bottom: 0;
+}
+
+.muted {
+  color: var(--pico-muted-color);
+  margin-top: 0.25rem;
+}
+
+nav {
+  display: flex;
+  gap: 0.5rem;
+  margin: 1rem 0;
+  flex-wrap: wrap;
+}
+
+nav button {
+  width: auto;
+  margin-bottom: 0;
+  padding: 0.4rem 0.9rem;
+}
+
+.cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.cards article {
+  margin: 0;
+  padding: 0.75rem 1rem;
+}
+
+.cards .num {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin: 0;
+}
+
+.cards .lbl {
+  color: var(--pico-muted-color);
+  font-size: 0.85rem;
+  margin: 0;
+}
+
+.badge {
+  display: inline-block;
+  padding: 0.1rem 0.5rem;
+  border-radius: 1rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.badge.ok {
+  background: var(--pico-ins-color, #1a7f37);
+  color: #fff;
+}
+
+.badge.down {
+  background: var(--pico-del-color, #b42318);
+  color: #fff;
+}
+
+.badge.warn {
+  background: #9a6700;
+  color: #fff;
+}
+
+.error {
+  background: color-mix(in srgb, var(--pico-del-color, #b42318) 15%, transparent);
+  border: 1px solid var(--pico-del-color, #b42318);
+  border-radius: var(--pico-border-radius);
+  padding: 0.75rem 1rem;
+  margin-bottom: 1rem;
+}
+
+table td.num,
+table th.num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+pre.logs {
+  max-height: 60vh;
+  overflow-y: auto;
+  font-size: 0.82rem;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.toolbar {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  margin-bottom: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.toolbar button,
+.toolbar a[role="button"] {
+  width: auto;
+  margin-bottom: 0;
+  padding: 0.3rem 0.8rem;
+}
+
+.steps-flow {
+  font-size: 0.9rem;
+}
+
+.inline-form {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  align-items: end;
+}
+
+.inline-form > * {
+  margin-bottom: 0;
+}

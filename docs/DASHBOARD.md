@@ -17,6 +17,21 @@ GUVNA_URL=http://127.0.0.1:20128 GUVNA_ADMIN_KEY=... \
 docker compose -f deploy/docker-compose.yml --profile dashboard up -d --build
 ```
 
+## VPS builds (registry-poor hosts)
+
+`proxy.golang.org` 403s some module zips from certain networks (IR, and
+the simurgh VPS). The image build is hermetic instead: `vendor/` +
+`GOPROXY=off`, so no module download happens inside Docker. `vendor/` is
+gitignored (140MB) — regenerate and ship it out of band:
+
+```sh
+go mod vendor                                    # local, needs module cache once
+tar -czf /tmp/opencode/vendor.tgz vendor        # then scp + extract into ~/guvna/
+```
+
+Re-ship only when `go.mod`/`go.sum` change (`go mod vendor` is
+deterministic; the Dockerfile fails loudly on a stale tree).
+
 Open `http://127.0.0.1:20129`. Tabs lazy-load on click; status/keys poll
 every 5s and logs every 3s, only while their tab is open. Switching tabs
 kills the previous poller (the trigger lives inside the loaded partial).

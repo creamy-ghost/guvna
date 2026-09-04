@@ -4,10 +4,13 @@
 
 FROM golang:1.26-alpine AS build
 WORKDIR /src
+# Hermetic build: vendor/ is shipped to registry-poor hosts (scp, not git —
+# see docs/DASHBOARD.md) and GOPROXY=off proves nothing hits the network.
+ENV GOPROXY=off
 COPY go.mod go.sum ./
-RUN go mod download
+COPY vendor ./vendor
 COPY . .
-RUN CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o /out/guvna-dashboard ./cmd/guvna-dashboard
+RUN CGO_ENABLED=0 go build -mod=vendor -trimpath -ldflags="-s -w" -o /out/guvna-dashboard ./cmd/guvna-dashboard
 
 # scratch, not distroless: the binary is fully static (no cgo, no TLS
 # outbound — it speaks plain HTTP to the gateway on localhost), and scratch

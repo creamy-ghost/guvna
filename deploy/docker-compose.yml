@@ -42,7 +42,10 @@ services:
     environment:
       - GOMEMLIMIT=64MiB
       - GUVNA_URL=http://127.0.0.1:20128
-    env_file: .env
+    env_file:
+      - .env
+      - path: dashboard.env
+        required: false
     depends_on:
       guvna:
         condition: service_healthy

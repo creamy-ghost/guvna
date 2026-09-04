@@ -35,6 +35,7 @@ type Dashboard struct {
 	adminKey string
 	client   *http.Client
 	tmpl     *template.Template
+	auth     *sessionAuth
 
 	mu         sync.Mutex
 	statusBody []byte
@@ -42,10 +43,12 @@ type Dashboard struct {
 }
 
 // New builds a Dashboard targeting gateway (base URL, no trailing slash)
-// with adminKey as the Bearer token for /admin/* and /v1/chains.
-func New(gateway, adminKey string) (*Dashboard, error) {
+// with adminKey as the Bearer token for /admin/* and /v1/chains, and
+// dashUser/dashPass gating the UI itself via the login page.
+func New(gateway, adminKey, dashUser, dashPass string) (*Dashboard, error) {
 	tmpl, err := template.ParseFS(web.FS,
 		"templates/layout.html",
+		"templates/login.html",
 		"templates/partials/overview.html",
 		"templates/partials/chains.html",
 		"templates/partials/keys.html",
@@ -59,6 +62,7 @@ func New(gateway, adminKey string) (*Dashboard, error) {
 		adminKey: adminKey,
 		client:   &http.Client{Timeout: 10 * time.Second},
 		tmpl:     tmpl,
+		auth:     newSessionAuth(dashUser, dashPass),
 	}, nil
 }
 
@@ -74,19 +78,63 @@ func (d *Dashboard) Handler() http.Handler {
 		w.Header().Set("Content-Type", "application/json")
 		w.Write([]byte(`{"status":"ok"}`))
 	})
-	mux.HandleFunc("GET /", d.handlePage)
-	mux.HandleFunc("GET /partial/overview", d.handleOverview)
-	mux.HandleFunc("GET /partial/keys", d.handleKeys)
-	mux.HandleFunc("GET /partial/logs", d.handleLogs)
-	mux.HandleFunc("GET /partial/chains", d.handleChainsView)
-	mux.HandleFunc("POST /chains", d.handleChainCreate)
-	mux.HandleFunc("DELETE /chains/{name}", d.handleChainDelete)
+	mux.HandleFunc("GET /login", d.handleLoginView)
+	mux.HandleFunc("POST /login", d.handleLogin)
+	mux.HandleFunc("POST /logout", d.handleLogout)
+	mux.HandleFunc("GET /", d.auth.requireAuth(d.handlePage))
+	mux.HandleFunc("GET /partial/overview", d.auth.requireAuth(d.handleOverview))
+	mux.HandleFunc("GET /partial/keys", d.auth.requireAuth(d.handleKeys))
+	mux.HandleFunc("GET /partial/logs", d.auth.requireAuth(d.handleLogs))
+	mux.HandleFunc("GET /partial/chains", d.auth.requireAuth(d.handleChainsView))
+	mux.HandleFunc("POST /chains", d.auth.requireAuth(d.handleChainCreate))
+	mux.HandleFunc("DELETE /chains/{name}", d.auth.requireAuth(d.handleChainDelete))
 	return mux
 }
 
 func (d *Dashboard) handlePage(w http.ResponseWriter, _ *http.Request) {
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	d.tmpl.ExecuteTemplate(w, "layout", map[string]string{"Gateway": d.gateway})
+}
+
+// loginView renders the login page; Error is empty on first view.
+type loginView struct {
+	Error string
+	User  string
+}
+
+func (d *Dashboard) handleLoginView(w http.ResponseWriter, r *http.Request) {
+	if d.auth.authed(r) {
+		http.Redirect(w, r, "/", http.StatusFound)
+		return
+	}
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	d.tmpl.ExecuteTemplate(w, "login", loginView{})
+}
+
+func (d *Dashboard) handleLogin(w http.ResponseWriter, r *http.Request) {
+	if err := r.ParseForm(); err != nil {
+		w.Header().Set("Content-Type", "text/html; charset=utf-8")
+		d.tmpl.ExecuteTemplate(w, "login", loginView{Error: "bad form submission"})
+		return
+	}
+	user := r.FormValue("user")
+	if !d.auth.allowAttempt(clientIP(r), time.Now()) {
+		http.Error(w, "too many attempts, try again in a minute", http.StatusTooManyRequests)
+		return
+	}
+	if !d.auth.checkPassword(user, r.FormValue("password")) {
+		w.Header().Set("Content-Type", "text/html; charset=utf-8")
+		d.tmpl.ExecuteTemplate(w, "login", loginView{Error: "wrong username or password", User: user})
+		return
+	}
+	d.auth.resetAttempts(clientIP(r))
+	setCookie(w, r, d.auth.issue(user, time.Now()), int(sessionTTL.Seconds()))
+	http.Redirect(w, r, "/", http.StatusFound)
+}
+
+func (d *Dashboard) handleLogout(w http.ResponseWriter, r *http.Request) {
+	setCookie(w, r, "", -1)
+	http.Redirect(w, r, "/login", http.StatusFound)
 }
 
 // gatewayDo performs an authenticated request against the gateway and

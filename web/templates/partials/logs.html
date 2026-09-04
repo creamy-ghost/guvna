@@ -1,12 +1,15 @@
 {{define "logs"}}<div hx-get="/partial/logs?n={{.N}}" hx-trigger="every 3s" hx-target="#panel" hx-swap="innerHTML" hx-sync="#panel:replace">
 {{if .Error}}<div class="error" role="alert">{{.Error}} <button hx-get="/partial/logs?n={{.N}}" hx-target="#panel" hx-swap="innerHTML">Retry</button></div>{{else}}
-<div class="toolbar" hx-get="/partial/logs" hx-target="#panel" hx-swap="innerHTML" hx-trigger="none">
+<div class="section-head"><h2>Logs</h2><span class="hint">gateway request ring, newest last</span></div>
+<div class="toolbar">
 <span class="muted">Last {{len .Lines}} lines</span>
+<span class="seg" hx-get="/partial/logs" hx-target="#panel" hx-swap="innerHTML" hx-trigger="none">
 <button hx-get="/partial/logs?n=100" hx-target="#panel" hx-swap="innerHTML">100</button>
 <button hx-get="/partial/logs?n=256" hx-target="#panel" hx-swap="innerHTML">256</button>
 <button hx-get="/partial/logs?n=512" hx-target="#panel" hx-swap="innerHTML">512</button>
+</span>
 </div>
 {{if .Lines}}<pre class="logs">{{range .Lines}}{{.}}
-{{end}}</pre>{{else}}<p class="muted">Log ring is empty.</p>{{end}}
+{{end}}</pre>{{else}}<div class="empty">Log ring is empty.</div>{{end}}
 {{end}}
 </div>{{end}}

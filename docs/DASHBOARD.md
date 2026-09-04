@@ -10,10 +10,11 @@ the dashboard only starts when asked (zero RAM when off).
 
 ```sh
 # local (gateway on :20128)
-GUVNA_URL=http://127.0.0.1:20128 GUVNA_ADMIN_KEY=... \
+GUVNA_URL=http://127.0.0.1:20128 GUVNA_ADMIN_KEY=... DASHBOARD_PASSWORD=... \
   go run ./cmd/guvna-dashboard            # listens on 127.0.0.1:20129
 
-# compose (VPS)
+# compose (VPS): ADMIN_KEY comes from .env, login credential from
+# deploy/dashboard.env (see dashboard.env.example)
 docker compose -f deploy/docker-compose.yml --profile dashboard up -d --build
 ```
 
@@ -52,21 +53,20 @@ kills the previous poller (the trigger lives inside the loaded partial).
 
 ## Exposure
 
-Never expose the dashboard directly. It binds localhost; put a reverse
-proxy with access control in front (same pattern as the gateway vhost):
+Never expose the dashboard without its login page: it binds localhost and
+auth happens in the app (styled login form → signed `HttpOnly` cookie,
+30-day sessions, 10 guesses/min/IP). The reverse proxy only terminates TLS:
 
 ```
-dashboard.example.com:9444 {
-    basic_auth {
-        admin $2a$...
-    }
+dashboard.example.com:9443 {
     reverse_proxy 127.0.0.1:20129
 }
 ```
 
-Anyone who reaches the dashboard can mutate chains (it acts with the
-admin key), so the proxy auth is the access control. No built-in login
-by design — single user, network boundary instead of a token scheme.
+Anyone logged in can mutate chains (the dashboard acts with the admin
+key), so pick a strong `DASHBOARD_PASSWORD` — changing it invalidates all
+sessions. No browser basic-auth popup by design: it can't be branded and
+trains password-pasting into chrome.
 
 ## Budget
 

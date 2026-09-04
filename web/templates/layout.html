@@ -4,25 +4,43 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Guvna dashboard</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%2334c77b'/%3E%3Ctext x='16' y='23' font-family='sans-serif' font-size='19' font-weight='bold' text-anchor='middle' fill='%2306281a'%3EG%3C/text%3E%3C/svg%3E">
 <link rel="stylesheet" href="/static/pico.min.css">
 <link rel="stylesheet" href="/static/custom.css">
 <script src="/static/htmx.min.js"></script>
 </head>
 <body>
-<main class="container">
-<header>
-<h1>Guvna</h1>
-<p class="muted">gateway dashboard &middot; {{.Gateway}}</p>
-</header>
-<nav>
-<button hx-get="/partial/overview" hx-target="#panel" hx-swap="innerHTML">Overview</button>
-<button hx-get="/partial/chains" hx-target="#panel" hx-swap="innerHTML">Chains</button>
-<button hx-get="/partial/keys" hx-target="#panel" hx-swap="innerHTML">Keys</button>
-<button hx-get="/partial/logs" hx-target="#panel" hx-swap="innerHTML">Logs</button>
+<div class="shell">
+<aside class="side">
+<div class="brand"><span class="mark">G</span><div><strong>Guvna</strong><small>gateway dashboard</small></div></div>
+<nav class="tabs" aria-label="Views">
+<button class="tab active" aria-current="page" hx-get="/partial/overview" hx-target="#panel" hx-swap="innerHTML">Overview</button>
+<button class="tab" hx-get="/partial/chains" hx-target="#panel" hx-swap="innerHTML">Chains</button>
+<button class="tab" hx-get="/partial/keys" hx-target="#panel" hx-swap="innerHTML">Keys</button>
+<button class="tab" hx-get="/partial/logs" hx-target="#panel" hx-swap="innerHTML">Logs</button>
 </nav>
+<div class="side-foot">
+<div class="gw"><span class="gw-label">gateway</span><span class="mono" title="{{.Gateway}}">{{.Gateway}}</span></div>
+<form class="logout-form" method="post" action="/logout"><button class="outline" type="submit">Logout</button></form>
+</div>
+</aside>
+<main class="content">
 <div id="panel" hx-get="/partial/overview" hx-trigger="load" hx-swap="innerHTML" aria-live="polite">
 <p class="muted">Loading&hellip;</p>
 </div>
 </main>
+</div>
+<script>
+document.querySelectorAll('.tab').forEach(function (b) {
+  b.addEventListener('click', function () {
+    document.querySelectorAll('.tab').forEach(function (x) {
+      x.classList.remove('active');
+      x.removeAttribute('aria-current');
+    });
+    b.classList.add('active');
+    b.setAttribute('aria-current', 'page');
+  });
+});
+</script>
 </body>
 </html>{{end}}

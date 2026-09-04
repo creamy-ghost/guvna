@@ -1,0 +1,26 @@
+{{define "login"}}<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Guvna dashboard — login</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%2334c77b'/%3E%3Ctext x='16' y='23' font-family='sans-serif' font-size='19' font-weight='bold' text-anchor='middle' fill='%2306281a'%3EG%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="/static/pico.min.css">
+<link rel="stylesheet" href="/static/custom.css">
+</head>
+<body>
+<main class="login">
+<section class="card">
+<div class="brand"><span class="mark">G</span><div><strong>Guvna</strong><small>gateway dashboard</small></div></div>
+<h2>Log in</h2>
+<p class="sub muted">Sessions last 30 days on this device.</p>
+{{if .Error}}<div class="error" role="alert">{{.Error}}</div>{{end}}
+<form method="post" action="/login">
+<label>Username <input type="text" name="user" value="{{.User}}" required autocomplete="username" autofocus></label>
+<label>Password <input type="password" name="password" required autocomplete="current-password"></label>
+<button type="submit">Log in</button>
+</form>
+</section>
+</main>
+</body>
+</html>{{end}}

@@ -47,8 +47,13 @@ func main() {
 	if adminKey == "" {
 		log.Fatalf("GUVNA_ADMIN_KEY (or ADMIN_KEY) env var required")
 	}
+	dashUser := envOr("DASHBOARD_USER", "admin")
+	dashPass := os.Getenv("DASHBOARD_PASSWORD")
+	if dashPass == "" {
+		log.Fatalf("DASHBOARD_PASSWORD env var required (login page credential)")
+	}
 
-	d, err := dashboard.New(*gateway, adminKey)
+	d, err := dashboard.New(*gateway, adminKey, dashUser, dashPass)
 	if err != nil {
 		log.Fatalf("dashboard: %v", err)
 	}

@@ -1,23 +1,34 @@
 {{define "overview"}}<div hx-get="/partial/overview" hx-trigger="every 5s" hx-target="#panel" hx-swap="innerHTML" hx-sync="#panel:replace">
 {{if .Error}}<div class="error" role="alert">{{.Error}} <button hx-get="/partial/overview" hx-target="#panel" hx-swap="innerHTML">Retry</button></div>{{else}}
-<div class="cards">
-<div><article><p class="num">{{.Uptime}}</p><p class="lbl">uptime</p></article></div>
-<div><article><p class="num">{{len .Chains}}</p><p class="lbl">chains</p></article></div>
-<div><article><p class="num">{{.StepsDown}}</p><p class="lbl">steps down</p></article></div>
-<div><article><p class="num">{{.Usage.Requests}}</p><p class="lbl">requests</p></article></div>
-<div><article><p class="num">{{.Usage.Errors}}</p><p class="lbl">errors</p></article></div>
-<div><article><p class="num">{{.Usage.TokensIn}} / {{.Usage.TokensOut}}</p><p class="lbl">tokens in / out</p></article></div>
+<div class="section-head"><h2>Overview</h2>{{if .StepsDown}}<span class="pill warn">{{.StepsDown}} step{{if ne .StepsDown 1}}s{{end}} down</span>{{else}}<span class="pill ok">all steps healthy</span>{{end}}</div>
+<div class="stats">
+<div class="stat"><p class="v">{{.Uptime}}</p><p class="k">uptime</p></div>
+<div class="stat"><p class="v">{{len .Chains}}</p><p class="k">chains</p></div>
+<div class="stat"><p class="v">{{.Usage.Requests}}</p><p class="k">requests</p></div>
+<div class="stat"><p class="v">{{.Usage.Errors}}</p><p class="k">errors</p></div>
+<div class="stat"><p class="v">{{.Usage.TokensIn}}</p><p class="k">tokens in</p></div>
+<div class="stat"><p class="v">{{.Usage.TokensOut}}</p><p class="k">tokens out</p></div>
 </div>
-{{if .Chains}}<p><strong>Chains:</strong> {{range $i, $c := .Chains}}{{if $i}} &middot; {{end}}<code>{{$c}}</code>{{end}}</p>{{else}}<p class="muted">No chains yet — create one on the Chains tab.</p>{{end}}
+<div class="grid2">
+<section class="card">
+<h3>Chains</h3>
+{{if .Chains}}<ul class="flow">{{range .Chains}}<li class="chip">{{.}}</li>{{end}}</ul>
+<p class="hint">Manage them on the Chains tab.</p>{{else}}<div class="empty">No chains yet — create one on the Chains tab.</div>{{end}}
+</section>
+<section class="card">
+<h3>Down steps</h3>
+{{if .DownSteps}}<table>
+<thead><tr><th>Provider</th><th>Model</th><th class="num">Failures</th><th>Cool-off left</th></tr></thead>
+<tbody>{{range .DownSteps}}<tr><td>{{.Provider}}</td><td>{{.Model}}</td><td class="num">{{.Failures}}</td><td>{{.DownFor}}</td></tr>{{end}}</tbody>
+</table>{{else}}<div class="empty">Nothing in cool-off.</div>{{end}}
+</section>
+</div>
+<section class="card" style="margin-top:1rem">
 <h3>Usage by provider</h3>
 {{if .Usage.ByProvider}}<table>
 <thead><tr><th>Provider</th><th class="num">Requests</th><th class="num">Errors</th><th class="num">Tokens in</th><th class="num">Tokens out</th></tr></thead>
 <tbody>{{range .Usage.ByProvider}}<tr><td>{{.Provider}}</td><td class="num">{{.Requests}}</td><td class="num">{{.Errors}}</td><td class="num">{{.TokensIn}}</td><td class="num">{{.TokensOut}}</td></tr>{{end}}</tbody>
-</table>{{else}}<p class="muted">No usage recorded yet.</p>{{end}}
-{{if .DownSteps}}<h3>Down steps</h3>
-<table>
-<thead><tr><th>Provider</th><th>Model</th><th class="num">Failures</th><th>Cool-off left</th></tr></thead>
-<tbody>{{range .DownSteps}}<tr><td>{{.Provider}}</td><td>{{.Model}}</td><td class="num">{{.Failures}}</td><td>{{.DownFor}}</td></tr>{{end}}</tbody>
-</table>{{end}}
+</table>{{else}}<div class="empty">No usage recorded yet.</div>{{end}}
+</section>
 {{end}}
 </div>{{end}}

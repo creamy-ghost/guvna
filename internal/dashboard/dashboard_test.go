@@ -73,7 +73,7 @@ func newTestDashboard(t *testing.T, gw *fakeGateway) (*Dashboard, *httptest.Serv
 	t.Helper()
 	gw.t = t
 	gws := httptest.NewServer(gw.handler())
-	d, err := New(gws.URL, "test-admin-key")
+	d, err := New(gws.URL, "test-admin-key", "admin", "test-dash-pass")
 	if err != nil {
 		t.Fatalf("New: %v", err)
 	}
@@ -108,7 +108,7 @@ func get(t *testing.T, url string) (int, string) {
 }
 
 func TestHealthz(t *testing.T) {
-	d, err := New("http://127.0.0.1:1", "k")
+	d, err := New("http://127.0.0.1:1", "k", "admin", "test-dash-pass")
 	if err != nil {
 		t.Fatalf("New: %v", err)
 	}
@@ -123,11 +123,12 @@ func TestHealthz(t *testing.T) {
 func TestOverviewRenders(t *testing.T) {
 	gw := &fakeGateway{status: testStatus}
 	_, _, ds := newTestDashboard(t, gw)
-	code, body := get(t, ds.URL+"/partial/overview")
+	c := login(t, ds.URL)
+	code, body := cget(t, c, ds.URL+"/partial/overview")
 	if code != 200 {
 		t.Fatalf("code = %d", code)
 	}
-	for _, want := range []string{"1h2m3s", "myfree", "groq", "bazaarlink", "12", "200 / 90"} {
+	for _, want := range []string{"1h2m3s", "myfree", "groq", "bazaarlink", "12", "tokens in", "tokens out"} {
 		if !strings.Contains(body, want) {
 			t.Errorf("overview missing %q", want)
 		}
@@ -137,7 +138,8 @@ func TestOverviewRenders(t *testing.T) {
 func TestOverviewGatewayDown(t *testing.T) {
 	gw := &fakeGateway{} // empty status = 500
 	_, _, ds := newTestDashboard(t, gw)
-	code, body := get(t, ds.URL+"/partial/overview")
+	c := login(t, ds.URL)
+	code, body := cget(t, c, ds.URL+"/partial/overview")
 	if code != 200 {
 		t.Fatalf("partial must degrade to 200 + error box, got %d", code)
 	}
@@ -149,7 +151,8 @@ func TestOverviewGatewayDown(t *testing.T) {
 func TestKeysRenders(t *testing.T) {
 	gw := &fakeGateway{status: testStatus}
 	_, _, ds := newTestDashboard(t, gw)
-	_, body := get(t, ds.URL+"/partial/keys")
+	c := login(t, ds.URL)
+	_, body := cget(t, c, ds.URL+"/partial/keys")
 	for _, want := range []string{"GROQ_1_KEY", "healthy", "quarantined", "down"} {
 		if !strings.Contains(body, want) {
 			t.Errorf("keys missing %q", want)
@@ -160,6 +163,7 @@ func TestKeysRenders(t *testing.T) {
 func TestLogsClampN(t *testing.T) {
 	gw := &fakeGateway{logs: `{"lines":["a","b"]}`}
 	_, _, ds := newTestDashboard(t, gw)
+	c := login(t, ds.URL)
 	for path, wantN := range map[string]string{
 		"/partial/logs":        "n=100",
 		"/partial/logs?n=256":  "n=256",
@@ -168,7 +172,7 @@ func TestLogsClampN(t *testing.T) {
 		"/partial/logs?n=-5":   "n=100",
 		"/partial/logs?n=512":  "n=512",
 	} {
-		_, body := get(t, ds.URL+path)
+		_, body := cget(t, c, ds.URL+path)
 		if !strings.Contains(body, "n="+strings.TrimPrefix(wantN, "n=")) {
 			t.Errorf("%s: poller missing %q", path, wantN)
 		}
@@ -179,7 +183,7 @@ func TestLogsClampN(t *testing.T) {
 	if q := gw.lastReq.URL.Query().Get("n"); q != "512" {
 		// last request in map order is random; just verify clamping happened
 		// at least once by re-requesting the overflow case.
-		_, _ = get(t, ds.URL+"/partial/logs?n=9999")
+		_, _ = cget(t, c, ds.URL+"/partial/logs?n=9999")
 		if q := gw.lastReq.URL.Query().Get("n"); q != "512" {
 			t.Errorf("gateway got n=%q, want 512", q)
 		}
@@ -189,7 +193,8 @@ func TestLogsClampN(t *testing.T) {
 func TestChainsView(t *testing.T) {
 	gw := &fakeGateway{chains: testChains}
 	_, _, ds := newTestDashboard(t, gw)
-	_, body := get(t, ds.URL+"/partial/chains")
+	c := login(t, ds.URL)
+	_, body := cget(t, c, ds.URL+"/partial/chains")
 	for _, want := range []string{"myfree", "cfg", "groq:llama", "locked"} {
 		if !strings.Contains(body, want) {
 			t.Errorf("chains missing %q", want)
@@ -207,8 +212,9 @@ func TestChainsView(t *testing.T) {
 func TestChainCreateSuccess(t *testing.T) {
 	gw := &fakeGateway{chains: testChains, postCode: 201, postResp: `{"name":"n","source":"runtime","steps":[]}`}
 	_, _, ds := newTestDashboard(t, gw)
+	c := login(t, ds.URL)
 	form := url.Values{"name": {"newchain"}, "steps": {"groq:llama\nmistral:codestral-latest"}}
-	resp, err := http.PostForm(ds.URL+"/chains", form)
+	resp, err := c.PostForm(ds.URL+"/chains", form)
 	if err != nil {
 		t.Fatalf("POST: %v", err)
 	}
@@ -229,8 +235,9 @@ func TestChainCreateSuccess(t *testing.T) {
 func TestChainCreateValidation(t *testing.T) {
 	gw := &fakeGateway{chains: testChains}
 	_, _, ds := newTestDashboard(t, gw)
+	c := login(t, ds.URL)
 	form := url.Values{"name": {"bad"}, "steps": {"not-a-step"}}
-	resp, err := http.PostForm(ds.URL+"/chains", form)
+	resp, err := c.PostForm(ds.URL+"/chains", form)
 	if err != nil {
 		t.Fatalf("POST: %v", err)
 	}
@@ -255,8 +262,9 @@ func TestChainCreateGatewayConflict(t *testing.T) {
 		postResp: `{"error":{"message":"chain \"myfree\" already exists"}}`,
 	}
 	_, _, ds := newTestDashboard(t, gw)
+	c := login(t, ds.URL)
 	form := url.Values{"name": {"myfree"}, "steps": {"groq:llama"}}
-	resp, err := http.PostForm(ds.URL+"/chains", form)
+	resp, err := c.PostForm(ds.URL+"/chains", form)
 	if err != nil {
 		t.Fatalf("POST: %v", err)
 	}
@@ -270,8 +278,9 @@ func TestChainCreateGatewayConflict(t *testing.T) {
 func TestChainDelete(t *testing.T) {
 	gw := &fakeGateway{chains: testChains}
 	_, _, ds := newTestDashboard(t, gw)
+	c := login(t, ds.URL)
 	req, _ := http.NewRequest(http.MethodDelete, ds.URL+"/chains/myfree", nil)
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := c.Do(req)
 	if err != nil {
 		t.Fatalf("DELETE: %v", err)
 	}
@@ -288,8 +297,9 @@ func TestChainDelete(t *testing.T) {
 func TestChainDeleteGatewayError(t *testing.T) {
 	gw := &fakeGateway{chains: testChains, delCode: 404, delResp: `{"error":{"message":"chain not found"}}`}
 	_, _, ds := newTestDashboard(t, gw)
+	c := login(t, ds.URL)
 	req, _ := http.NewRequest(http.MethodDelete, ds.URL+"/chains/ghost", nil)
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := c.Do(req)
 	if err != nil {
 		t.Fatalf("DELETE: %v", err)
 	}
@@ -316,7 +326,7 @@ func TestParseSteps(t *testing.T) {
 }
 
 func TestStaticVendored(t *testing.T) {
-	d, err := New("http://127.0.0.1:1", "k")
+	d, err := New("http://127.0.0.1:1", "k", "admin", "test-dash-pass")
 	if err != nil {
 		t.Fatalf("New: %v", err)
 	}
@@ -333,20 +343,22 @@ func TestStaticVendored(t *testing.T) {
 func TestAdminKeyForwarded(t *testing.T) {
 	gw := &fakeGateway{status: testStatus}
 	_, _, ds := newTestDashboard(t, gw)
-	_, _ = get(t, ds.URL+"/partial/overview")
+	c := login(t, ds.URL)
+	_, _ = cget(t, c, ds.URL+"/partial/overview")
 	if h := gw.lastReq.Header.Get("Authorization"); h != "Bearer test-admin-key" {
 		t.Errorf("Authorization = %q", h)
 	}
 }
 
 func TestPageRenders(t *testing.T) {
-	d, err := New("http://127.0.0.1:1", "k")
+	d, err := New("http://127.0.0.1:1", "k", "admin", "test-dash-pass")
 	if err != nil {
 		t.Fatalf("New: %v", err)
 	}
 	s := httptest.NewServer(d.Handler())
 	defer s.Close()
-	_, body := get(t, s.URL+"/")
+	c := login(t, s.URL)
+	_, body := cget(t, c, s.URL+"/")
 	for _, want := range []string{"/static/htmx.min.js", "/static/pico.min.css", `hx-get="/partial/chains"`, `hx-get="/partial/logs`} {
 		if !strings.Contains(body, want) {
 			t.Errorf("page missing %q", want)

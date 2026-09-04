@@ -1,20 +1,24 @@
 {{define "chains"}}<div>
 {{if .Error}}<div class="error" role="alert">{{.Error}}</div>{{end}}
+<div class="section-head"><h2>Chains ({{len .Chains}})</h2><span class="hint">first healthy step serves, rest are fallbacks</span></div>
+<section class="card">
 <h3>Create chain</h3>
-<form hx-post="/chains" hx-target="#panel" hx-swap="innerHTML">
+<form class="chain-form" hx-post="/chains" hx-target="#panel" hx-swap="innerHTML">
+<div class="row">
 <label>Name <input type="text" name="name" value="{{.FormName}}" required placeholder="myfree"></label>
+<button type="submit">Create chain</button>
+</div>
 <label>Steps — one <code>provider:model</code> per line, in fallback order
 <textarea name="steps" rows="3" required placeholder="bazaarlink:qwen/qwen3.7-flash:free&#10;groq:llama-3.3-70b-versatile">{{.FormSteps}}</textarea></label>
-<button type="submit">Create chain</button>
 </form>
-<h3>Chains ({{len .Chains}})</h3>
-{{if .Chains}}<table>
-<thead><tr><th>Name</th><th>Source</th><th>Steps</th><th></th></tr></thead>
-<tbody>{{range .Chains}}<tr>
-<td><code>{{.Name}}</code></td>
-<td>{{if eq .Source "runtime"}}<span class="badge ok">runtime</span>{{else}}<span class="badge warn">{{.Source}}</span>{{end}}</td>
-<td class="steps-flow">{{range $i, $s := .Steps}}{{if $i}} &rarr; {{end}}<code>{{$s.Provider}}:{{$s.Model}}</code>{{end}}</td>
-<td>{{if eq .Source "runtime"}}<button class="outline" hx-delete="/chains/{{.Name}}" hx-target="#panel" hx-swap="innerHTML" hx-confirm="Delete chain {{.Name}}?">Delete</button>{{else}}<span class="muted" title="Config-defined chains live in config.yaml">locked</span>{{end}}</td>
-</tr>{{end}}</tbody>
-</table>{{else}}<p class="muted">No chains yet.</p>{{end}}
+</section>
+{{if .Chains}}{{range .Chains}}<article class="chain">
+<div class="chain-head">
+<code>{{.Name}}</code>
+{{if eq .Source "runtime"}}<span class="pill info">runtime</span>{{else}}<span class="pill warn">{{.Source}}</span>{{end}}
+<span class="spacer"></span>
+{{if eq .Source "runtime"}}<button class="outline" hx-delete="/chains/{{.Name}}" hx-target="#panel" hx-swap="innerHTML" hx-confirm="Delete chain {{.Name}}?">Delete</button>{{else}}<span class="muted hint" title="Config-defined chains live in config.yaml">locked</span>{{end}}
+</div>
+<ul class="flow">{{range $i, $s := .Steps}}{{if $i}}<li class="arr" aria-hidden="true">&rarr;</li>{{end}}<li class="chip">{{$s.Provider}}:{{$s.Model}}</li>{{end}}</ul>
+</article>{{end}}{{else}}<div class="empty">No chains yet — create your first one above.</div>{{end}}
 </div>{{end}}

@@ -340,7 +340,7 @@ func (s *Server) tryStep(r *http.Request, step router.Step, body []byte) (*http.
 		pool, _ = keypool.New(p.Name, p.AllKeyEnvs(), p.Rotation, p.Quarantine)
 		s.pools[step.Provider] = pool
 	}
-	payload := mergeParams(withModel(body, step.Model), step.Params)
+	payload := rewritePayload(body, step.Model, step.Params)
 	var lastErr error
 	for attempt := 0; attempt <= retries; attempt++ {
 		if attempt > 0 && s.retryWait != nil {
@@ -393,47 +393,42 @@ func retryable(status int, err error) bool {
 	return status == http.StatusTooManyRequests || status >= 500
 }
 
-// withModel rewrites the "model" field of a chat completion body to the given
-// model name, passing everything else through untouched.
-func withModel(body []byte, model string) []byte {
+// rewritePayload unmarshals the JSON body exactly once to apply both the "model"
+// override and any step-level params (as fill-missing defaults). Explicit client
+// values for params always win.
+func rewritePayload(body []byte, model string, params map[string]any) []byte {
 	var m map[string]json.RawMessage
 	if err := json.Unmarshal(body, &m); err != nil {
 		return body
 	}
+
+	modified := false
 	if m["model"] != nil {
 		enc, err := json.Marshal(model)
 		if err == nil {
 			m["model"] = enc
+			modified = true
 		}
 	}
-	out, err := json.Marshal(m)
-	if err != nil {
-		return body
-	}
-	return out
-}
 
-// mergeParams applies a step's params as fill-missing defaults: a param is set
-// on the body only when the client didn't supply that field. Explicit client
-// values always win. The body is returned unchanged on any parse failure.
-func mergeParams(body []byte, params map[string]any) []byte {
-	if len(params) == 0 {
+	if len(params) > 0 {
+		for k, v := range params {
+			if _, present := m[k]; present {
+				continue
+			}
+			enc, err := json.Marshal(v)
+			if err != nil {
+				continue
+			}
+			m[k] = enc
+			modified = true
+		}
+	}
+
+	if !modified {
 		return body
 	}
-	var m map[string]json.RawMessage
-	if err := json.Unmarshal(body, &m); err != nil {
-		return body
-	}
-	for k, v := range params {
-		if _, present := m[k]; present {
-			continue
-		}
-		enc, err := json.Marshal(v)
-		if err != nil {
-			continue
-		}
-		m[k] = enc
-	}
+
 	out, err := json.Marshal(m)
 	if err != nil {
 		return body

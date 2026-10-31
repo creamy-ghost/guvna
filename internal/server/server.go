@@ -340,7 +340,7 @@ func (s *Server) tryStep(r *http.Request, step router.Step, body []byte) (*http.
 		pool, _ = keypool.New(p.Name, p.AllKeyEnvs(), p.Rotation, p.Quarantine)
 		s.pools[step.Provider] = pool
 	}
-	payload := preparePayload(body, step.Model, step.Params)
+	payload := rewritePayload(body, step.Model, step.Params)
 	var lastErr error
 	for attempt := 0; attempt <= retries; attempt++ {
 		if attempt > 0 && s.retryWait != nil {
@@ -393,19 +393,24 @@ func retryable(status int, err error) bool {
 	return status == http.StatusTooManyRequests || status >= 500
 }
 
-// preparePayload rewrites the "model" field of a chat completion body to the given
-// model name and applies step params as fill-missing defaults in a single pass.
-func preparePayload(body []byte, model string, params map[string]any) []byte {
+// rewritePayload unmarshals the JSON body exactly once to apply both the "model"
+// override and any step-level params (as fill-missing defaults). Explicit client
+// values for params always win.
+func rewritePayload(body []byte, model string, params map[string]any) []byte {
 	var m map[string]json.RawMessage
 	if err := json.Unmarshal(body, &m); err != nil {
 		return body
 	}
+
+	modified := false
 	if m["model"] != nil {
 		enc, err := json.Marshal(model)
 		if err == nil {
 			m["model"] = enc
+			modified = true
 		}
 	}
+
 	if len(params) > 0 {
 		for k, v := range params {
 			if _, present := m[k]; present {
@@ -416,8 +421,14 @@ func preparePayload(body []byte, model string, params map[string]any) []byte {
 				continue
 			}
 			m[k] = enc
+			modified = true
 		}
 	}
+
+	if !modified {
+		return body
+	}
+
 	out, err := json.Marshal(m)
 	if err != nil {
 		return body

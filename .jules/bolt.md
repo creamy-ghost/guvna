@@ -1,3 +1,3 @@
-## 2026-10-31 - Redundant JSON Unmarshaling on Hot Path
-**Learning:** Chaining separate functions for JSON manipulation (e.g., `withModel` followed by `mergeParams`) in request handlers causes multiple full unmarshal/marshal cycles on the same payload. This is a severe anti-pattern in a high-throughput proxy as it wastes significant CPU and allocations on the request hot path.
-**Action:** When a request body requires multiple transformations, combine them into a single parsing pass.
+## 2025-02-18 - Avoid double JSON serialization in hot paths
+**Learning:** Chaining multiple functions that independently unmarshal and marshal the same JSON payload in an HTTP proxy hot path introduces significant unnecessary GC pressure and CPU overhead.
+**Action:** When applying multiple mutations to a JSON body (e.g., updating a `model` field and merging in default parameters), combine them into a single pass that unmarshals the JSON once, applies all modifications, and marshals it once.

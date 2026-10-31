@@ -297,10 +297,12 @@ func (d *Dashboard) handleLogs(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	n := 100
 	if v := r.URL.Query().Get("n"); v != "" {
-		if parsed, err := strconv.Atoi(v); err == nil && parsed > 0 && parsed <= 512 {
-			n = parsed
-		} else if err == nil && parsed > 512 {
-			n = 512
+		if parsed, err := strconv.Atoi(v); err == nil {
+			if parsed > 512 {
+				n = 512
+			} else if parsed > 0 {
+				n = parsed
+			}
 		}
 	}
 	code, body, err := d.gatewayDo(http.MethodGet, "/admin/logs?n="+strconv.Itoa(n), nil)

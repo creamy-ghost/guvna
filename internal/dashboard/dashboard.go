@@ -299,6 +299,8 @@ func (d *Dashboard) handleLogs(w http.ResponseWriter, r *http.Request) {
 	if v := r.URL.Query().Get("n"); v != "" {
 		if parsed, err := strconv.Atoi(v); err == nil && parsed > 0 && parsed <= 512 {
 			n = parsed
+		} else if err == nil && parsed > 512 {
+			n = 512
 		}
 	}
 	code, body, err := d.gatewayDo(http.MethodGet, "/admin/logs?n="+strconv.Itoa(n), nil)

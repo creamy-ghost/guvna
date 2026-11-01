@@ -2,7 +2,7 @@
 
 ## Reporting
 
-Report vulnerabilities privately via [GitHub Security Advisories](https://github.com/creamy-ghost/guvna/security/advisories/new). Please do not open public issues for security problems. You can expect an initial response within 7 days.
+Report vulnerabilities privately via [GitHub Security Advisories](https://github.com/Hesamation/guvna/security/advisories/new). Please do not open public issues for security problems. You can expect an initial response within 7 days.
 
 ## Scope
 

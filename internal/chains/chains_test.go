@@ -6,8 +6,8 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/creamy-ghost/guvna/internal/config"
-	"github.com/creamy-ghost/guvna/internal/router"
+	"github.com/Hesamation/guvna/internal/config"
+	"github.com/Hesamation/guvna/internal/router"
 )
 
 func newRouter() *router.Router {

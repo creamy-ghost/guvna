@@ -20,7 +20,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/creamy-ghost/guvna/web"
+	"github.com/Hesamation/guvna/web"
 )
 
 // statusCacheTTL coalesces concurrent tab polls into one gateway request.

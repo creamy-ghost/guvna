@@ -2,7 +2,7 @@
 
 Low-resource AI gateway in Go. One OpenAI-compatible endpoint that routes to free-tier LLM providers through named, self-healing chains — built for one user, runs in ~15–40MB of RAM.
 
-[![CI](https://github.com/creamy-ghost/guvna/actions/workflows/ci.yml/badge.svg)](https://github.com/creamy-ghost/guvna/actions/workflows/ci.yml)
+[![CI](https://github.com/Hesamation/guvna/actions/workflows/ci.yml/badge.svg)](https://github.com/Hesamation/guvna/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
 ## Why
@@ -22,7 +22,7 @@ Guvna takes neither horn: **config-as-code, no database, one static binary** (~1
 ## Quickstart
 
 ```sh
-git clone https://github.com/creamy-ghost/guvna && cd guvna
+git clone https://github.com/Hesamation/guvna && cd guvna
 cp .env.example .env        # fill in ADMIN_KEY, API_KEYS, and at least one provider key
 docker compose -f deploy/docker-compose.yml up -d
 ```
@@ -30,12 +30,12 @@ docker compose -f deploy/docker-compose.yml up -d
 Or without Docker:
 
 ```sh
-go install github.com/creamy-ghost/guvna/cmd/guvna@latest
+go install github.com/Hesamation/guvna/cmd/guvna@latest
 set -a; source .env; set +a
 guvna -config config.yaml          # listens on :20128
 ```
 
-Tagged releases also publish an image to `ghcr.io/creamy-ghost/guvna`.
+Tagged releases also publish an image to `ghcr.io/Hesamation/guvna`.
 
 ### First request
 

@@ -5,7 +5,7 @@ Guvna is a single static binary with config-as-code. Two supported ways to run i
 ## Option A — Docker Compose
 
 ```sh
-git clone https://github.com/creamy-ghost/guvna && cd guvna
+git clone https://github.com/Hesamation/guvna && cd guvna
 cp .env.example .env              # add ADMIN_KEY + API_KEYS + provider keys
 docker compose -f deploy/docker-compose.yml up -d
 ```
@@ -21,13 +21,13 @@ docker run -d --name guvna \
   -e GOMEMLIMIT=256MiB \
   -v guvna-data:/data \
   -v "$PWD/config.yaml:/config.yaml:ro" \
-  ghcr.io/creamy-ghost/guvna:latest
+  ghcr.io/Hesamation/guvna:latest
 ```
 
 ## Option B — Plain binary / systemd user unit
 
 ```sh
-go install github.com/creamy-ghost/guvna/cmd/guvna@latest
+go install github.com/Hesamation/guvna/cmd/guvna@latest
 cp .env.example .env && set -a && source .env && set +a   # or use systemd EnvironmentFile=
 guvna -config config.yaml                             # data dir defaults to ~/.guvna
 ```

@@ -15,7 +15,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/creamy-ghost/guvna/internal/config"
+	"github.com/Hesamation/guvna/internal/config"
 )
 
 const chatPath = "/v1/chat/completions"

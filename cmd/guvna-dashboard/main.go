@@ -22,7 +22,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/creamy-ghost/guvna/internal/dashboard"
+	"github.com/Hesamation/guvna/internal/dashboard"
 )
 
 const defaultAddr = "127.0.0.1:20129"

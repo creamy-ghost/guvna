@@ -5,7 +5,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/creamy-ghost/guvna/internal/router"
+	"github.com/Hesamation/guvna/internal/router"
 	"gopkg.in/yaml.v3"
 )
 

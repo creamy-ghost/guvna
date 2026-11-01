@@ -7,7 +7,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/creamy-ghost/guvna/internal/config"
+	"github.com/Hesamation/guvna/internal/config"
 )
 
 var ErrNotFound = errors.New("no chain or model matches")

@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/creamy-ghost/guvna/internal/config"
+	"github.com/Hesamation/guvna/internal/config"
 )
 
 func testUpstream(t *testing.T, wantPath, wantKey string) *httptest.Server {

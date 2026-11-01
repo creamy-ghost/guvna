@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/creamy-ghost/guvna/internal/config"
+	"github.com/Hesamation/guvna/internal/config"
 )
 
 func TestClassFor(t *testing.T) {

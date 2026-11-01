@@ -1,4 +1,4 @@
-module github.com/creamy-ghost/guvna
+module github.com/Hesamation/guvna
 
 go 1.26.6
 

@@ -3,7 +3,7 @@ package dashboard
 import (
 	"io/fs"
 
-	"github.com/creamy-ghost/guvna/web"
+	"github.com/Hesamation/guvna/web"
 )
 
 // statusResp mirrors the gateway's /admin/status payload (decode-only).
